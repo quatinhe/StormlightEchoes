@@ -56,6 +56,9 @@ public class PlayerController : MonoBehaviour
     [Tooltip("How far below the player to check for ground")]
     public float groundCheckDistance = 0.1f;
 
+    [Header("Attack Damage")]
+    public int attackDamage = 1;
+
     private Rigidbody2D rb;
     private Animator animator;
     private SpriteRenderer sr;
@@ -263,16 +266,20 @@ public class PlayerController : MonoBehaviour
             0f,
             attackLayer
         );
-        if (objectsToHit.Length > 0)
+        bool didHitEnemy = false;
+        for (int i = 0; i < objectsToHit.Length; i++)
+        {
+            Enemy enemy = objectsToHit[i].GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(attackDamage);
+                didHitEnemy = true;
+            }
+        }
+        if (didHitEnemy)
         {
             Debug.Log("hit");
         }
-        // Removed per-object logs to avoid confusion
-        // foreach (Collider2D obj in objectsToHit)
-        // {
-        //     Debug.Log($"Hit object: {obj.name}");
-        //     // Add damage or interaction logic here
-        // }
     }
 
     private void Attack()
