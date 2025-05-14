@@ -29,6 +29,12 @@ public class PlayerController : MonoBehaviour
     [Tooltip("How long until the player can dash again")]
     public float dashCooldown = 1f;
 
+    [Header("Attack")]
+    [Tooltip("Can the player attack?")]
+    public bool canAttack = true;
+    [Tooltip("Time between attacks")]
+    public float timeBetweenAttack = 0.5f;
+
     [Header("Ground Check")]
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -52,6 +58,10 @@ public class PlayerController : MonoBehaviour
     private float dashTimeCounter;
     private float dashCooldownCounter;
     private Vector2 dashDirection;
+
+    // Attack variables
+    private bool isAttacking;
+    private float timeSinceAttack;
 
     public static PlayerController Instace;
     void Awake()
@@ -89,6 +99,12 @@ public class PlayerController : MonoBehaviour
                 EndDash();
             }
             return;
+        }
+
+        // Update attack timer
+        if (timeSinceAttack > 0)
+        {
+            timeSinceAttack -= Time.deltaTime;
         }
 
         // 1) Horizontal input
@@ -163,7 +179,16 @@ public class PlayerController : MonoBehaviour
             dashCooldownCounter -= Time.deltaTime;
         }
 
-        // 7) Update Animator parameters
+        // 7) Attack
+        if (canAttack && timeSinceAttack <= 0)
+        {
+            if (Input.GetMouseButtonDown(0)) // Left mouse button
+            {
+                Attack();
+            }
+        }
+
+        // 8) Update Animator parameters
         bool walking = Mathf.Abs(moveInput) > 0.1f && isGrounded;
         bool jumping = !isGrounded;
         animator.SetBool("Walking", walking);
@@ -207,6 +232,25 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
         animator.SetBool("Dashing", false);
         rb.gravityScale = gravityScale;
+    }
+
+    private void Attack()
+    {
+        isAttacking = true;
+        timeSinceAttack = timeBetweenAttack;
+        
+        // Trigger attack animation
+        animator.SetTrigger("Attacking");
+        
+        // You can add attack logic here (like raycast for hit detection)
+        
+        // Reset attack state after animation
+        Invoke(nameof(ResetAttack), timeBetweenAttack);
+    }
+
+    private void ResetAttack()
+    {
+        isAttacking = false;
     }
 
     void OnDrawGizmosSelected()
