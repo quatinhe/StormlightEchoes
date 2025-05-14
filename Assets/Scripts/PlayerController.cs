@@ -34,6 +34,20 @@ public class PlayerController : MonoBehaviour
     public bool canAttack = true;
     [Tooltip("Time between attacks")]
     public float timeBetweenAttack = 0.5f;
+    [Tooltip("Transform for side attack hitbox")]
+    public Transform sideAttackTransform;
+    [Tooltip("Transform for down attack hitbox")]
+    public Transform downAttackTransform;
+    [Tooltip("Transform for up attack hitbox")]
+    public Transform upAttackTransform;
+    [Tooltip("Size of the side attack hitbox")]
+    public Vector2 sideAttackArea = new Vector2(1f, 0.5f);
+    [Tooltip("Size of the down attack hitbox")]
+    public Vector2 downAttackArea = new Vector2(0.5f, 1f);
+    [Tooltip("Size of the up attack hitbox")]
+    public Vector2 upAttackArea = new Vector2(0.5f, 1f);
+    [Tooltip("Layer mask for attack detection")]
+    public LayerMask attackLayer;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -62,6 +76,7 @@ public class PlayerController : MonoBehaviour
     // Attack variables
     private bool isAttacking;
     private float timeSinceAttack;
+    private Vector2 lastAttackDirection;
 
     public static PlayerController Instace;
     void Awake()
@@ -76,6 +91,12 @@ public class PlayerController : MonoBehaviour
         if (groundCheck == null)
         {
             Debug.LogError("Ground Check transform is not assigned! Please create an empty GameObject as a child of the player and assign it to the groundCheck field.");
+        }
+
+        // Check for attack transforms
+        if (sideAttackTransform == null || downAttackTransform == null || upAttackTransform == null)
+        {
+            Debug.LogError("Attack transforms are not assigned! Please create empty GameObjects as children of the player and assign them to the respective transform fields.");
         }
 
         if (Instace == null)
@@ -114,9 +135,9 @@ public class PlayerController : MonoBehaviour
         wasGrounded = isGrounded;
         isGrounded = Physics2D.OverlapCircle(
             groundCheck.position, groundCheckRadius, groundLayer);
-            
+        
         // Debug ground check
-        Debug.Log($"Ground Check: Position={groundCheck.position}, IsGrounded={isGrounded}, Layer={groundLayer.value}");
+        // Debug.Log($"Ground Check: Position={groundCheck.position}, IsGrounded={isGrounded}, Layer={groundLayer.value}");
 
         // Reset double jump when grounded
         if (isGrounded)
@@ -234,15 +255,57 @@ public class PlayerController : MonoBehaviour
         rb.gravityScale = gravityScale;
     }
 
+    private void Hit(Transform _attackTransform, Vector2 _attackArea)
+    {
+        Collider2D[] objectsToHit = Physics2D.OverlapBoxAll(
+            _attackTransform.position,
+            _attackArea,
+            0f,
+            attackLayer
+        );
+        if (objectsToHit.Length > 0)
+        {
+            Debug.Log("hit");
+        }
+        // Removed per-object logs to avoid confusion
+        // foreach (Collider2D obj in objectsToHit)
+        // {
+        //     Debug.Log($"Hit object: {obj.name}");
+        //     // Add damage or interaction logic here
+        // }
+    }
+
     private void Attack()
     {
         isAttacking = true;
         timeSinceAttack = timeBetweenAttack;
         
+        // Y-axis directional input
+        float verticalInput = Input.GetAxisRaw("Vertical");
+        lastAttackDirection = new Vector2(moveInput, verticalInput).normalized;
+        
         // Trigger attack animation
         animator.SetTrigger("Attacking");
         
-        // You can add attack logic here (like raycast for hit detection)
+        // Perform attack based on direction
+        if (Mathf.Abs(verticalInput) > 0.1f)
+        {
+            if (verticalInput > 0)
+            {
+                // Up attack
+                Hit(upAttackTransform, upAttackArea);
+            }
+            else
+            {
+                // Down attack
+                Hit(downAttackTransform, downAttackArea);
+            }
+        }
+        else
+        {
+            // Side attack
+            Hit(sideAttackTransform, sideAttackArea);
+        }
         
         // Reset attack state after animation
         Invoke(nameof(ResetAttack), timeBetweenAttack);
@@ -259,6 +322,25 @@ public class PlayerController : MonoBehaviour
         {
             Gizmos.color = isGrounded ? Color.green : Color.red;
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        }
+
+        // Draw attack areas
+        if (sideAttackTransform != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(sideAttackTransform.position, sideAttackArea);
+        }
+        
+        if (downAttackTransform != null)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireCube(downAttackTransform.position, downAttackArea);
+        }
+        
+        if (upAttackTransform != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(upAttackTransform.position, upAttackArea);
         }
     }
 }
