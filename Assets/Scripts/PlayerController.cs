@@ -84,6 +84,16 @@ public class PlayerController : MonoBehaviour
     public int damageFlashCount = 3;
     [Tooltip("How long each flash lasts")]
     public float damageFlashDuration = 0.1f;
+    [Tooltip("Blood spurt effect prefab")]
+    public GameObject bloodSpurt;
+    [Tooltip("How long the blood spurt effect lasts")]
+    public float bloodSpurtDuration = 0.5f;
+    [Tooltip("How much to slow down time when hit (0.1 = 10% speed)")]
+    [Range(0.01f, 1f)] public float hitTimeScale = 0.1f;
+    [Tooltip("How long the time slow effect lasts")]
+    public float hitTimeDuration = 0.1f;
+    [Tooltip("Reference to the health bar UI")]
+    public HealthBarUI healthBar;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -119,6 +129,8 @@ public class PlayerController : MonoBehaviour
     private float flashTimer;
     private int flashCount;
     private bool isFlashing;
+    private float hitTimeTimer;
+    private bool isTimeSlowed;
 
     public static PlayerController Instace { get; private set; }
 
@@ -159,10 +171,24 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
+        if (healthBar != null)
+        {
+            healthBar.SetHealthImmediate(currentHealth, maxHealth);
+        }
     }
 
     void Update()
     {
+        // Handle time slow
+        if (isTimeSlowed)
+        {
+            hitTimeTimer -= Time.unscaledDeltaTime;
+            if (hitTimeTimer <= 0)
+            {
+                ResumeTime();
+            }
+        }
+
         // Handle invulnerability
         if (isInvulnerable)
         {
@@ -171,6 +197,8 @@ public class PlayerController : MonoBehaviour
             {
                 isInvulnerable = false;
                 sr.color = Color.white;
+                // Spawn blood spurt when invulnerability ends
+                SpawnBloodSpurt();
             }
         }
 
@@ -483,6 +511,17 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void SpawnBloodSpurt()
+    {
+        if (bloodSpurt != null)
+        {
+            // Spawn the blood spurt at the player's position
+            GameObject spurt = Instantiate(bloodSpurt, transform.position, Quaternion.identity);
+            // Destroy it after the specified duration
+            Destroy(spurt, bloodSpurtDuration);
+        }
+    }
+
     void OnDrawGizmosSelected()
     {
         if (groundCheck != null)
@@ -518,6 +557,15 @@ public class PlayerController : MonoBehaviour
         currentHealth -= amount;
         Debug.Log($"Player took {amount} damage. Health: {currentHealth}/{maxHealth}");
 
+        // Update health bar
+        if (healthBar != null)
+        {
+            healthBar.UpdateHealthBar(currentHealth, maxHealth);
+        }
+
+        // Slow down time
+        SlowTime();
+
         // Start invulnerability
         isInvulnerable = true;
         invulnerabilityTimer = invulnerabilityDuration;
@@ -537,6 +585,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void SlowTime()
+    {
+        Time.timeScale = hitTimeScale;
+        isTimeSlowed = true;
+        hitTimeTimer = hitTimeDuration;
+    }
+
+    private void ResumeTime()
+    {
+        Time.timeScale = 1f;
+        isTimeSlowed = false;
+    }
+
     private void Die()
     {
         Debug.Log("Player died!");
@@ -549,5 +610,11 @@ public class PlayerController : MonoBehaviour
         // You might want to trigger game over or respawn logic here
         // For now, we'll just destroy the player
         Destroy(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        // Make sure time scale is reset when the player is destroyed
+        Time.timeScale = 1f;
     }
 }
