@@ -95,6 +95,27 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Reference to the health bar UI")]
     public HealthBarUI healthBar;
 
+    [Header("Healing")]
+    [Tooltip("How long it takes to heal one health")]
+    public float healTime = 1.5f;
+    [Tooltip("How much health to restore per heal")]
+    public int healAmount = 1;
+
+    [Header("Mana Settings")]
+    [Tooltip("Current mana of the player")]
+    public float mana = 100f;
+    [Tooltip("How fast mana drains while healing (per second)")]
+    public float manaDrainSpeed = 20f;
+
+    [Tooltip("How much mana to gain when hitting an enemy")]
+    public float manaGain = 10f;
+
+    [Tooltip("Maximum mana the player can have")]
+    public float maxMana = 100f;
+
+    [Tooltip("Reference to the mana bar UI")]
+    public ManaBarUI manaBar;
+
     private Rigidbody2D rb;
     private Animator animator;
     private SpriteRenderer sr;
@@ -131,6 +152,11 @@ public class PlayerController : MonoBehaviour
     private bool isFlashing;
     private float hitTimeTimer;
     private bool isTimeSlowed;
+
+    private bool isHealing;
+    private float healTimer;
+
+    private bool healButtonHeldLastFrame;
 
     public static PlayerController Instace { get; private set; }
 
@@ -174,6 +200,10 @@ public class PlayerController : MonoBehaviour
         if (healthBar != null)
         {
             healthBar.SetHealthImmediate(currentHealth, maxHealth);
+        }
+        if (manaBar != null)
+        {
+            manaBar.SetManaImmediate(mana, maxMana);
         }
     }
 
@@ -349,6 +379,45 @@ public class PlayerController : MonoBehaviour
         // Flip based on direction
         if (moveInput > 0f)      sr.flipX = false;
         else if (moveInput < 0f) sr.flipX = true;
+
+        // Healing logic (Hollow Knight style: must hold for healTime, only heal once per hold)
+        bool healButtonHeld = Input.GetMouseButton(1);
+
+        if (!isHealing && currentHealth < maxHealth && IsIdle() && healButtonHeld && !healButtonHeldLastFrame && mana > 0f)
+        {
+            // Start healing charge
+            isHealing = true;
+            healTimer = healTime;
+            animator.SetBool("Healing", true); // Optional: trigger healing animation
+        }
+
+        if (isHealing)
+        {
+            // Interrupt healing if player moves, jumps, attacks, dashes, takes damage, releases the button, or runs out of mana
+            if (!IsIdle() || isDashing || isRecoiling || isAttacking || isInvulnerable || !healButtonHeld || mana <= 0f)
+            {
+                isHealing = false;
+                animator.SetBool("Healing", false); // Optional: stop healing animation
+            }
+            else
+            {
+                healTimer -= Time.deltaTime;
+                mana -= manaDrainSpeed * Time.deltaTime;
+                mana = Mathf.Clamp(mana, 0, maxMana);
+                if (healTimer <= 0f)
+                {
+                    Heal(healAmount);
+                    isHealing = false;
+                    animator.SetBool("Healing", false); // Optional: stop healing animation
+                }
+                if (manaBar != null)
+                {
+                    manaBar.UpdateManaBar(mana, maxMana);
+                }
+            }
+        }
+
+        healButtonHeldLastFrame = healButtonHeld;
     }
 
     void FixedUpdate()
@@ -423,6 +492,13 @@ public class PlayerController : MonoBehaviour
         if (didHitEnemy)
         {
             Debug.Log("hit");
+            // Gain mana when hitting an enemy
+            mana += manaGain;
+            mana = Mathf.Clamp(mana, 0, maxMana);
+            if (manaBar != null)
+            {
+                manaBar.UpdateManaBar(mana, maxMana);
+            }
             // Apply recoil when hitting an enemy
             ApplyRecoil();
         }
@@ -616,5 +692,20 @@ public class PlayerController : MonoBehaviour
     {
         // Make sure time scale is reset when the player is destroyed
         Time.timeScale = 1f;
+    }
+
+    private bool IsIdle()
+    {
+        return Mathf.Abs(moveInput) < 0.01f && isGrounded && !isDashing && !isRecoiling && !isAttacking && !isInvulnerable;
+    }
+
+    private void Heal(int amount)
+    {
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        if (healthBar != null)
+        {
+            healthBar.UpdateHealthBar(currentHealth, maxHealth);
+        }
+        // Optionally trigger a heal animation or effect here
     }
 }
