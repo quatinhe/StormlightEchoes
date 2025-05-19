@@ -48,6 +48,22 @@ public class PlayerController : MonoBehaviour
     public Vector2 upAttackArea = new Vector2(0.5f, 1f);
     [Tooltip("Layer mask for attack detection")]
     public LayerMask attackLayer;
+    [Tooltip("Prefab for the slash effect")]
+    public GameObject slashEffect;
+    [Tooltip("How long the slash effect should last")]
+    public float slashEffectDuration = 0.2f;
+
+    [Header("Recoil")]
+    [Tooltip("Number of steps in X direction recoil")]
+    public int recoilXSteps = 3;
+    [Tooltip("Number of steps in Y direction recoil")]
+    public int recoilYSteps = 2;
+    [Tooltip("Speed of X direction recoil")]
+    public float recoilXSpeed = 10f;
+    [Tooltip("Speed of Y direction recoil")]
+    public float recoilYSpeed = 8f;
+    [Tooltip("How long each recoil step lasts")]
+    public float recoilStepDuration = 0.1f;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -58,6 +74,16 @@ public class PlayerController : MonoBehaviour
 
     [Header("Attack Damage")]
     public int attackDamage = 1;
+
+    [Header("Health")]
+    [Tooltip("Maximum health of the player")]
+    public int maxHealth = 3;
+    [Tooltip("How long the player is invulnerable after taking damage")]
+    public float invulnerabilityDuration = 1f;
+    [Tooltip("How many times the player flashes when taking damage")]
+    public int damageFlashCount = 3;
+    [Tooltip("How long each flash lasts")]
+    public float damageFlashDuration = 0.1f;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -81,9 +107,36 @@ public class PlayerController : MonoBehaviour
     private float timeSinceAttack;
     private Vector2 lastAttackDirection;
 
-    public static PlayerController Instace;
+    // Recoil variables
+    private bool isRecoiling;
+    private float recoilTimeLeft;
+    private int currentRecoilStep;
+    private Vector2 recoilDirection;
+
+    private int currentHealth;
+    private bool isInvulnerable;
+    private float invulnerabilityTimer;
+    private float flashTimer;
+    private int flashCount;
+    private bool isFlashing;
+
+    public static PlayerController Instace { get; private set; }
+
     void Awake()
     {
+        // Singleton pattern implementation
+        if (Instace == null)
+        {
+            Instace = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        // Initialize components
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         sr = GetComponent<SpriteRenderer>();
@@ -101,19 +154,46 @@ public class PlayerController : MonoBehaviour
         {
             Debug.LogError("Attack transforms are not assigned! Please create empty GameObjects as children of the player and assign them to the respective transform fields.");
         }
+    }
 
-        if (Instace == null)
-        {
-            Instace = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+    void Start()
+    {
+        currentHealth = maxHealth;
     }
 
     void Update()
     {
+        // Handle invulnerability
+        if (isInvulnerable)
+        {
+            invulnerabilityTimer -= Time.deltaTime;
+            if (invulnerabilityTimer <= 0)
+            {
+                isInvulnerable = false;
+                sr.color = Color.white;
+            }
+        }
+
+        // Handle damage flash
+        if (isFlashing)
+        {
+            flashTimer -= Time.deltaTime;
+            if (flashTimer <= 0)
+            {
+                flashCount++;
+                if (flashCount >= damageFlashCount * 2)
+                {
+                    isFlashing = false;
+                    sr.color = Color.white;
+                }
+                else
+                {
+                    sr.color = flashCount % 2 == 0 ? Color.white : Color.red;
+                    flashTimer = damageFlashDuration;
+                }
+            }
+        }
+
         // Check if dash should end
         if (isDashing)
         {
@@ -121,6 +201,26 @@ public class PlayerController : MonoBehaviour
             if (dashTimeCounter <= 0f)
             {
                 EndDash();
+            }
+            return;
+        }
+
+        // Handle recoil
+        if (isRecoiling)
+        {
+            recoilTimeLeft -= Time.deltaTime;
+            if (recoilTimeLeft <= 0f)
+            {
+                currentRecoilStep++;
+                if (currentRecoilStep >= recoilXSteps)
+                {
+                    isRecoiling = false;
+                    rb.linearVelocity = Vector2.zero;
+                }
+                else
+                {
+                    recoilTimeLeft = recoilStepDuration;
+                }
             }
             return;
         }
@@ -231,7 +331,15 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 8) Apply horizontal movement
+        if (isRecoiling)
+        {
+            // Gradually reduce recoil velocity
+            float stepProgress = 1f - ((float)currentRecoilStep / recoilXSteps);
+            rb.linearVelocity = recoilDirection * stepProgress;
+            return;
+        }
+
+        // Apply horizontal movement
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
     }
 
@@ -260,8 +368,16 @@ public class PlayerController : MonoBehaviour
 
     private void Hit(Transform _attackTransform, Vector2 _attackArea)
     {
+        // Calculate the position based on facing direction
+        Vector2 hitPosition = _attackTransform.position;
+        if (sr.flipX)
+        {
+            // If facing left, mirror the x position relative to the player
+            hitPosition.x = transform.position.x - (_attackTransform.position.x - transform.position.x);
+        }
+
         Collider2D[] objectsToHit = Physics2D.OverlapBoxAll(
-            _attackTransform.position,
+            hitPosition,
             _attackArea,
             0f,
             attackLayer
@@ -279,7 +395,25 @@ public class PlayerController : MonoBehaviour
         if (didHitEnemy)
         {
             Debug.Log("hit");
+            // Apply recoil when hitting an enemy
+            ApplyRecoil();
         }
+    }
+
+    private void ApplyRecoil()
+    {
+        isRecoiling = true;
+        currentRecoilStep = 0;
+        recoilTimeLeft = recoilStepDuration;
+        
+        // Calculate recoil direction based on facing direction
+        recoilDirection = new Vector2(
+            sr.flipX ? recoilXSpeed : -recoilXSpeed,
+            recoilYSpeed
+        );
+        
+        // Apply initial recoil velocity
+        rb.linearVelocity = recoilDirection;
     }
 
     private void Attack()
@@ -301,17 +435,21 @@ public class PlayerController : MonoBehaviour
             {
                 // Up attack
                 Hit(upAttackTransform, upAttackArea);
+                SpawnSlashEffect(upAttackTransform.position, 90f);
             }
             else
             {
                 // Down attack
                 Hit(downAttackTransform, downAttackArea);
+                SpawnSlashEffect(downAttackTransform.position, -90f);
             }
         }
         else
         {
             // Side attack
             Hit(sideAttackTransform, sideAttackArea);
+            float rotation = sr.flipX ? 180f : 0f;
+            SpawnSlashEffect(sideAttackTransform.position, rotation);
         }
         
         // Reset attack state after animation
@@ -321,6 +459,28 @@ public class PlayerController : MonoBehaviour
     private void ResetAttack()
     {
         isAttacking = false;
+    }
+
+    private void SpawnSlashEffect(Vector3 position, float rotation)
+    {
+        if (slashEffect != null)
+        {
+            // Calculate the position based on facing direction
+            Vector3 slashPosition = position;
+            if (sr.flipX)
+            {
+                // If facing left, mirror the x position relative to the player
+                slashPosition.x = transform.position.x - (position.x - transform.position.x);
+                // Flip the rotation for side attacks
+                if (rotation == 0f)
+                {
+                    rotation = 180f;
+                }
+            }
+
+            GameObject slash = Instantiate(slashEffect, slashPosition, Quaternion.Euler(0, 0, rotation));
+            Destroy(slash, slashEffectDuration);
+        }
     }
 
     void OnDrawGizmosSelected()
@@ -349,5 +509,45 @@ public class PlayerController : MonoBehaviour
             Gizmos.color = Color.green;
             Gizmos.DrawWireCube(upAttackTransform.position, upAttackArea);
         }
+    }
+
+    public void TakeDamage(int amount)
+    {
+        if (isInvulnerable) return;
+
+        currentHealth -= amount;
+        Debug.Log($"Player took {amount} damage. Health: {currentHealth}/{maxHealth}");
+
+        // Start invulnerability
+        isInvulnerable = true;
+        invulnerabilityTimer = invulnerabilityDuration;
+
+        // Start damage flash
+        isFlashing = true;
+        flashCount = 0;
+        flashTimer = damageFlashDuration;
+        sr.color = Color.red;
+
+        // Trigger take damage animation
+        animator.SetTrigger("TakeDamage");
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        Debug.Log("Player died!");
+        // Trigger death animation if you have one
+        animator.SetTrigger("Die");
+        
+        // Disable player controls
+        enabled = false;
+        
+        // You might want to trigger game over or respawn logic here
+        // For now, we'll just destroy the player
+        Destroy(gameObject);
     }
 }
