@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Animator))]
 public class PlayerController : MonoBehaviour
@@ -52,6 +53,24 @@ public class PlayerController : MonoBehaviour
     public GameObject slashEffect;
     [Tooltip("How long the slash effect should last")]
     public float slashEffectDuration = 0.2f;
+
+    [Header("Spellcasting")]
+    [Tooltip("Can the player cast spells?")]
+    public bool canCast = true;
+    [Tooltip("Time between spell casts")]
+    public float timeBetweenCast = 0.5f;
+    [Tooltip("How much mana each spell costs")]
+    public float manaSpellCost = 20f;
+    [Tooltip("Side spell prefab")]
+    public GameObject sideSpell;
+    [Tooltip("Up spell prefab")]
+    public GameObject upSpell;
+    [Tooltip("Down spell GameObject (child of player)")]
+    public GameObject downSpell;
+    [Tooltip("Transform for side spell spawn point")]
+    public Transform sideSpellSpawnPoint;
+    [Tooltip("Transform for up spell spawn point")]
+    public Transform upSpellSpawnPoint;
 
     [Header("Recoil")]
     [Tooltip("Number of steps in X direction recoil")]
@@ -143,6 +162,10 @@ public class PlayerController : MonoBehaviour
     private float recoilTimeLeft;
     private int currentRecoilStep;
     private Vector2 recoilDirection;
+
+    // Spellcasting variables
+    private bool isCasting;
+    private float timeSinceCast;
 
     private int currentHealth;
     private bool isInvulnerable;
@@ -289,6 +312,12 @@ public class PlayerController : MonoBehaviour
             timeSinceAttack -= Time.deltaTime;
         }
 
+        // Update spell cast timer
+        if (timeSinceCast > 0)
+        {
+            timeSinceCast -= Time.deltaTime;
+        }
+
         // 1) Horizontal input
         moveInput = Input.GetAxisRaw("Horizontal");
 
@@ -312,7 +341,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // 3) Jump buffer
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.W))
         {
             jumpBufferCounter = jumpBufferTime;
         }
@@ -370,11 +399,21 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // 8) Spell Cast
+        if (canCast && timeSinceCast <= 0 && mana >= manaSpellCost)
+        {
+            if (Input.GetButtonDown("CastSpell"))
+            {
+                CastSpell();
+            }
+        }
+
         // 8) Update Animator parameters
         bool walking = Mathf.Abs(moveInput) > 0.1f && isGrounded;
         bool jumping = !isGrounded;
         animator.SetBool("Walking", walking);
         animator.SetBool("Jumping", jumping);
+        animator.SetBool("Casting", isCasting);
 
         // Flip based on direction
         if (moveInput > 0f)      sr.flipX = false;
@@ -707,5 +746,121 @@ public class PlayerController : MonoBehaviour
             healthBar.UpdateHealthBar(currentHealth, maxHealth);
         }
         // Optionally trigger a heal animation or effect here
+    }
+
+    private void CastSpell()
+    {
+        isCasting = true;
+        timeSinceCast = timeBetweenCast;
+        
+        // Y-axis directional input
+        float verticalInput = Input.GetAxisRaw("Vertical");
+        
+        // Deduct mana cost
+        mana -= manaSpellCost;
+        mana = Mathf.Clamp(mana, 0, maxMana);
+        if (manaBar != null)
+        {
+            manaBar.UpdateManaBar(mana, maxMana);
+        }
+
+        // Cast spell based on direction
+        if (Mathf.Abs(verticalInput) > 0.1f)
+        {
+            if (verticalInput > 0)
+            {
+                // Up spell
+                if (upSpell == null)
+                {
+                    Debug.LogError("Up spell prefab is not assigned!");
+                    return;
+                }
+                if (upSpellSpawnPoint == null)
+                {
+                    Debug.LogError("Up spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Up Spell Spawn Point field in the PlayerController component.");
+                    return;
+                }
+
+                // Start the delayed spawn coroutine for up spell
+                StartCoroutine(DelayedUpSpellSpawn());
+            }
+            else
+            {
+                // Down spell (activate child GameObject)
+                if (downSpell != null)
+                {
+                    downSpell.SetActive(false); // Reset if needed
+                    downSpell.SetActive(true);  // Activate effect
+                }
+            }
+        }
+        else
+        {
+            // Side spell
+            if (sideSpell == null)
+            {
+                Debug.LogError("Side spell prefab is not assigned!");
+                return;
+            }
+            if (sideSpellSpawnPoint == null)
+            {
+                Debug.LogError("Side spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Side Spell Spawn Point field in the PlayerController component.");
+                return;
+            }
+
+            // Start the delayed spawn coroutine
+            StartCoroutine(DelayedFireballSpawn());
+        }
+
+        // Reset casting state after animation
+        Invoke(nameof(ResetCasting), timeBetweenCast);
+    }
+
+    private IEnumerator DelayedUpSpellSpawn()
+    {
+        // Wait for 0.1 seconds
+        yield return new WaitForSeconds(0.1f);
+
+        // Use the spawn point's position
+        Vector3 spawnPosition = upSpellSpawnPoint.position;
+        Debug.Log($"Up spell spawn point position: {spawnPosition}");
+        
+        GameObject spell = Instantiate(upSpell, spawnPosition, Quaternion.Euler(0, 0, 90));
+        if (spell == null)
+        {
+            Debug.LogError("Failed to instantiate up spell!");
+        }
+        else
+        {
+            Debug.Log("Up spell instantiated successfully!");
+        }
+    }
+
+    private IEnumerator DelayedFireballSpawn()
+    {
+        // Wait for 0.1 seconds
+        yield return new WaitForSeconds(0.1f);
+
+        float rotation = sr.flipX ? 180f : 0f;
+        // Use the spawn point's position
+        Vector3 spawnPosition = sideSpellSpawnPoint.position;
+        Debug.Log($"Side spell spawn point position: {spawnPosition}");
+        Debug.Log($"Player position: {transform.position}");
+        Debug.Log($"Side spell spawn point is child of player: {sideSpellSpawnPoint.IsChildOf(transform)}");
+        
+        GameObject fireball = Instantiate(sideSpell, spawnPosition, Quaternion.Euler(0, 0, rotation));
+        if (fireball == null)
+        {
+            Debug.LogError("Failed to instantiate fireball!");
+        }
+        else
+        {
+            Debug.Log("Fireball instantiated successfully!");
+        }
+    }
+
+    private void ResetCasting()
+    {
+        isCasting = false;
     }
 }
