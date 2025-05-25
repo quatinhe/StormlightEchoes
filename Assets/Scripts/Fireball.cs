@@ -1,15 +1,17 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class Fireball : MonoBehaviour
+public class Fireball : NetworkBehaviour
 {
-    [Header("Fireball Properties")]
-    public float damage = 10f;
+    [Header("Fireball Properties")] public float damage = 10f;
     public float hitForce = 5f;
     public int speed = 10;
     public float lifetime = 3f;
 
     private Rigidbody2D rb;
     private Vector2 direction;
+
+    NetworkObject networkObject;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -22,14 +24,13 @@ public class Fireball : MonoBehaviour
             return;
         }
 
+        networkObject = GetComponent<NetworkObject>();
+
         // Set initial velocity based on the fireball's rotation
         float angle = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
         direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
         rb.linearVelocity = direction * speed;
         Debug.Log($"Fireball velocity set to: {rb.linearVelocity}");
-
-        // Destroy the fireball after lifetime seconds
-        Destroy(gameObject, lifetime);
     }
 
     // Update is called once per frame
@@ -37,28 +38,39 @@ public class Fireball : MonoBehaviour
     {
         // Add debug visualization
         Debug.DrawRay(transform.position, direction * 0.5f, Color.red);
+
+        UpdateLifetime();
+    }
+
+    void UpdateLifetime()
+    {
+        if (HasAuthority)
+        {
+            lifetime -= Time.deltaTime;
+            if (lifetime <= 0)
+            {
+                networkObject.Despawn();
+            }
+        }
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
         Debug.Log($"Fireball hit: {other.gameObject.name}");
-        // Check if we hit an enemy
+
         Enemy enemy = other.GetComponent<Enemy>();
-        if (enemy != null)
+        if (enemy)
         {
             // Deal damage to the enemy
             enemy.TakeDamage(Mathf.RoundToInt(damage));
-            Debug.Log($"Dealt {damage} damage to enemy");
 
-            // Apply knockback force if the enemy has a Rigidbody2D
-            Rigidbody2D enemyRb = other.GetComponent<Rigidbody2D>();
-            if (enemyRb != null)
+            // Apply knockback force
+            enemy.AddForce(direction * hitForce);
+
+            if (HasAuthority)
             {
-                enemyRb.AddForce(direction * hitForce, ForceMode2D.Impulse);
+                networkObject.Despawn();
             }
-
-            // Destroy the fireball after hitting
-            Destroy(gameObject);
         }
     }
 }

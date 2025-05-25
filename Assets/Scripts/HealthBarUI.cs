@@ -1,7 +1,8 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HealthBarUI : MonoBehaviour
+public class HealthBarUI : NetworkBehaviour
 {
     [Header("Health Bar Settings")]
     [Tooltip("The image component that represents the health bar fill")]
@@ -30,6 +31,8 @@ public class HealthBarUI : MonoBehaviour
 
     void Start()
     {
+        
+        
         if (healthBarFill == null)
         {
             Debug.LogError("Health Bar Fill image is not assigned!");

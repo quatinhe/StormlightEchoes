@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections;
 
@@ -22,13 +23,29 @@ public class Parshendi : Enemy
     protected override void Start() 
     {
         base.Start();
-        playerTransform = PlayerController.Instace.transform;
+        
         attackTimer = attackCooldown;
         animator = GetComponent<Animator>();
         
         if (animator == null)
         {
             Debug.LogError($"{gameObject.name} requires an Animator component!");
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (HasAuthority)
+        {
+            //todo: temporary
+            if (!playerTransform)
+            {
+                PlayerController controller = FindFirstObjectByType<PlayerController>();
+                if (controller)
+                {
+                    playerTransform = controller.transform;
+                }
+            }
         }
     }
 
@@ -40,6 +57,9 @@ public class Parshendi : Enemy
 
     protected override void UpdateBehavior()
     {
+        if(!HasAuthority)
+            return;
+        
         if (playerTransform == null) return;
 
         // Calculate distance to player
@@ -99,6 +119,9 @@ public class Parshendi : Enemy
 
     protected override void Attack()
     {
+        if(!HasAuthority)
+            return;
+        
         // Check if player is still in range
         if (Vector2.Distance(transform.position, playerTransform.position) <= attackRange)
         {
@@ -126,6 +149,7 @@ public class Parshendi : Enemy
             PlayerController player = playerTransform.GetComponent<PlayerController>();
             if (player != null)
             {
+                //todo: health component
                 player.TakeDamage(damage);
                 Debug.Log("Parshendi attacks player!");
             }

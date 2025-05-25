@@ -1,128 +1,145 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Animator))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
-    [Header("Movement")]
-    public float moveSpeed = 5f;
-    [Tooltip("How strong the gravity is")]
-    public float gravityScale = 1f;
+    [Header("Movement")] public float moveSpeed = 5f;
+    [Tooltip("How strong the gravity is")] public float gravityScale = 1f;
 
-    [Header("Jump")]
-    public float jumpForce = 16f;
-    [Tooltip("How much to reduce upward velocity when jump is released")]
-    [Range(0f, 1f)] public float jumpCutMultiplier = 0.5f;
+    [Header("Jump")] public float jumpForce = 16f;
+
+    [Tooltip("How much to reduce upward velocity when jump is released")] [Range(0f, 1f)]
+    public float jumpCutMultiplier = 0.5f;
+
     [Tooltip("How long to buffer jump input")]
     public float jumpBufferTime = 0.2f;
+
     [Tooltip("How long to allow jumping after leaving a platform")]
     public float coyoteTime = 0.2f;
+
     [Tooltip("Can the player double jump?")]
     public bool canDoubleJump = true;
 
-    [Header("Dash")]
-    [Tooltip("Can the player dash?")]
+    [Header("Dash")] [Tooltip("Can the player dash?")]
     public bool canDash = true;
-    [Tooltip("How fast the dash is")]
-    public float dashSpeed = 30f;
-    [Tooltip("How long the dash lasts")]
-    public float dashTime = 0.3f;
+
+    [Tooltip("How fast the dash is")] public float dashSpeed = 30f;
+    [Tooltip("How long the dash lasts")] public float dashTime = 0.3f;
+
     [Tooltip("How long until the player can dash again")]
     public float dashCooldown = 1f;
 
-    [Header("Attack")]
-    [Tooltip("Can the player attack?")]
+    [Header("Attack")] [Tooltip("Can the player attack?")]
     public bool canAttack = true;
-    [Tooltip("Time between attacks")]
-    public float timeBetweenAttack = 0.5f;
+
+    [Tooltip("Time between attacks")] public float timeBetweenAttack = 0.5f;
+
     [Tooltip("Transform for side attack hitbox")]
     public Transform sideAttackTransform;
+
     [Tooltip("Transform for down attack hitbox")]
     public Transform downAttackTransform;
+
     [Tooltip("Transform for up attack hitbox")]
     public Transform upAttackTransform;
+
     [Tooltip("Size of the side attack hitbox")]
     public Vector2 sideAttackArea = new Vector2(1f, 0.5f);
+
     [Tooltip("Size of the down attack hitbox")]
     public Vector2 downAttackArea = new Vector2(0.5f, 1f);
+
     [Tooltip("Size of the up attack hitbox")]
     public Vector2 upAttackArea = new Vector2(0.5f, 1f);
+
     [Tooltip("Layer mask for attack detection")]
     public LayerMask attackLayer;
+
     [Tooltip("Prefab for the slash effect")]
     public GameObject slashEffect;
+
     [Tooltip("How long the slash effect should last")]
     public float slashEffectDuration = 0.2f;
 
-    [Header("Spellcasting")]
-    [Tooltip("Can the player cast spells?")]
+    [Header("Spellcasting")] [Tooltip("Can the player cast spells?")]
     public bool canCast = true;
-    [Tooltip("Time between spell casts")]
-    public float timeBetweenCast = 0.5f;
+
+    [Tooltip("Time between spell casts")] public float timeBetweenCast = 0.5f;
+
     [Tooltip("How much mana each spell costs")]
     public float manaSpellCost = 20f;
-    [Tooltip("Side spell prefab")]
-    public GameObject sideSpell;
-    [Tooltip("Up spell prefab")]
-    public GameObject upSpell;
+
+    [Tooltip("Side spell prefab")] public GameObject sideSpell;
+    [Tooltip("Up spell prefab")] public GameObject upSpell;
+
     [Tooltip("Down spell GameObject (child of player)")]
     public GameObject downSpell;
+
     [Tooltip("Transform for side spell spawn point")]
     public Transform sideSpellSpawnPoint;
+
     [Tooltip("Transform for up spell spawn point")]
     public Transform upSpellSpawnPoint;
 
-    [Header("Recoil")]
-    [Tooltip("Number of steps in X direction recoil")]
+    [Header("Recoil")] [Tooltip("Number of steps in X direction recoil")]
     public int recoilXSteps = 3;
+
     [Tooltip("Number of steps in Y direction recoil")]
     public int recoilYSteps = 2;
+
     [Tooltip("Speed of X direction recoil")]
     public float recoilXSpeed = 10f;
+
     [Tooltip("Speed of Y direction recoil")]
     public float recoilYSpeed = 8f;
+
     [Tooltip("How long each recoil step lasts")]
     public float recoilStepDuration = 0.1f;
 
-    [Header("Ground Check")]
-    public Transform groundCheck;
+    [Header("Ground Check")] public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
+
     [Tooltip("How far below the player to check for ground")]
     public float groundCheckDistance = 0.1f;
 
-    [Header("Attack Damage")]
-    public int attackDamage = 1;
+    [Header("Attack Damage")] public int attackDamage = 1;
 
-    [Header("Health")]
-    [Tooltip("Maximum health of the player")]
+    [Header("Health")] [Tooltip("Maximum health of the player")]
     public int maxHealth = 3;
+
     [Tooltip("How long the player is invulnerable after taking damage")]
     public float invulnerabilityDuration = 1f;
+
     [Tooltip("How many times the player flashes when taking damage")]
     public int damageFlashCount = 3;
-    [Tooltip("How long each flash lasts")]
-    public float damageFlashDuration = 0.1f;
-    [Tooltip("Blood spurt effect prefab")]
-    public GameObject bloodSpurt;
+
+    [Tooltip("How long each flash lasts")] public float damageFlashDuration = 0.1f;
+    [Tooltip("Blood spurt effect prefab")] public GameObject bloodSpurt;
+
     [Tooltip("How long the blood spurt effect lasts")]
     public float bloodSpurtDuration = 0.5f;
-    [Tooltip("How much to slow down time when hit (0.1 = 10% speed)")]
-    [Range(0.01f, 1f)] public float hitTimeScale = 0.1f;
+
+    [Tooltip("How much to slow down time when hit (0.1 = 10% speed)")] [Range(0.01f, 1f)]
+    public float hitTimeScale = 0.1f;
+
     [Tooltip("How long the time slow effect lasts")]
     public float hitTimeDuration = 0.1f;
+
     [Tooltip("Reference to the health bar UI")]
     public HealthBarUI healthBar;
 
-    [Header("Healing")]
-    [Tooltip("How long it takes to heal one health")]
+    [Header("Healing")] [Tooltip("How long it takes to heal one health")]
     public float healTime = 1.5f;
+
     [Tooltip("How much health to restore per heal")]
     public int healAmount = 1;
 
-    [Header("Mana Settings")]
-    [Tooltip("Current mana of the player")]
+    [Header("Mana Settings")] [Tooltip("Current mana of the player")]
     public float mana = 100f;
+
     [Tooltip("How fast mana drains while healing (per second)")]
     public float manaDrainSpeed = 20f;
 
@@ -138,7 +155,13 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
     private SpriteRenderer sr;
-    private float moveInput;
+
+    private NetworkVariable<float> moveInput = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
+
+    private bool wantJump;
+    private bool wantStopJump;
+
     private bool isGrounded;
     private bool wasGrounded;
     private float jumpBufferCounter;
@@ -147,7 +170,9 @@ public class PlayerController : MonoBehaviour
     private bool hasDoubleJumped;
 
     // Dash variables
-    private bool isDashing;
+    private NetworkVariable<bool> isDashing = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
+
     private float dashTimeCounter;
     private float dashCooldownCounter;
     private Vector2 dashDirection;
@@ -164,7 +189,9 @@ public class PlayerController : MonoBehaviour
     private Vector2 recoilDirection;
 
     // Spellcasting variables
-    private bool isCasting;
+    private NetworkVariable<bool> isCasting = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
+
     private float timeSinceCast;
 
     private int currentHealth;
@@ -176,54 +203,73 @@ public class PlayerController : MonoBehaviour
     private float hitTimeTimer;
     private bool isTimeSlowed;
 
-    private bool isHealing;
+    private bool wantHeal = false;
+    private NetworkVariable<bool> isHealing = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
+
     private float healTimer;
 
     private bool healButtonHeldLastFrame;
 
     public static PlayerController Instace { get; private set; }
 
+    public void AddMovementInput(Vector2 input)
+    {
+        moveInput.Value = input.x;
+    }
+
+    public void SetWantJump(bool newWantJump)
+    {
+        wantJump = newWantJump;
+    }
+
+    public void SetWantStopJump(bool newWantStopJump)
+    {
+        wantStopJump = newWantStopJump;
+    }
+
     void Awake()
     {
-        // Singleton pattern implementation
-        if (Instace == null)
-        {
-            Instace = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         // Initialize components
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         sr = GetComponent<SpriteRenderer>();
-        
+
         // Set initial gravity scale
         rb.gravityScale = gravityScale;
-        
+
         if (groundCheck == null)
         {
-            Debug.LogError("Ground Check transform is not assigned! Please create an empty GameObject as a child of the player and assign it to the groundCheck field.");
+            Debug.LogError(
+                "Ground Check transform is not assigned! Please create an empty GameObject as a child of the player and assign it to the groundCheck field.");
         }
 
         // Check for attack transforms
         if (sideAttackTransform == null || downAttackTransform == null || upAttackTransform == null)
         {
-            Debug.LogError("Attack transforms are not assigned! Please create empty GameObjects as children of the player and assign them to the respective transform fields.");
+            Debug.LogError(
+                "Attack transforms are not assigned! Please create empty GameObjects as children of the player and assign them to the respective transform fields.");
         }
+
+        isDashing.OnValueChanged += (value, newValue) => animator.SetBool("Dashing", newValue);
+        isHealing.OnValueChanged += (value, newValue) => animator.SetBool("Healing", newValue);
+        isCasting.OnValueChanged += (value, newValue) => animator.SetBool("Casting", newValue);
     }
 
     void Start()
     {
         currentHealth = maxHealth;
+
+        if (!IsLocalPlayer)
+        {
+            return;
+        }
+
         if (healthBar != null)
         {
             healthBar.SetHealthImmediate(currentHealth, maxHealth);
         }
+
         if (manaBar != null)
         {
             manaBar.SetManaImmediate(mana, maxMana);
@@ -232,6 +278,35 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        HandleDamageFlash();
+        HandleInvulnerability();
+
+        if (moveInput.Value > 0f)
+        {
+            sr.flipX = false;
+        }
+        else if (moveInput.Value < 0f)
+        {
+            sr.flipX = true;
+        }
+
+        // 2) Ground check
+        wasGrounded = isGrounded;
+        isGrounded = Physics2D.OverlapCircle(
+            groundCheck.position, groundCheckRadius, groundLayer);
+
+        bool walking = Mathf.Abs(moveInput.Value) > 0.1f && isGrounded;
+        bool jumping = !isGrounded;
+
+        // 8) Update Animator parameters
+        animator.SetBool("Walking", walking);
+        animator.SetBool("Jumping", jumping);
+
+        if (!IsOwner)
+        {
+            return;
+        }
+
         // Handle time slow
         if (isTimeSlowed)
         {
@@ -242,47 +317,16 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Handle invulnerability
-        if (isInvulnerable)
-        {
-            invulnerabilityTimer -= Time.deltaTime;
-            if (invulnerabilityTimer <= 0)
-            {
-                isInvulnerable = false;
-                sr.color = Color.white;
-                // Spawn blood spurt when invulnerability ends
-                SpawnBloodSpurt();
-            }
-        }
-
-        // Handle damage flash
-        if (isFlashing)
-        {
-            flashTimer -= Time.deltaTime;
-            if (flashTimer <= 0)
-            {
-                flashCount++;
-                if (flashCount >= damageFlashCount * 2)
-                {
-                    isFlashing = false;
-                    sr.color = Color.white;
-                }
-                else
-                {
-                    sr.color = flashCount % 2 == 0 ? Color.white : Color.red;
-                    flashTimer = damageFlashDuration;
-                }
-            }
-        }
-
+        dashCooldownCounter -= Time.deltaTime;
         // Check if dash should end
-        if (isDashing)
+        if (isDashing.Value)
         {
             dashTimeCounter -= Time.deltaTime;
             if (dashTimeCounter <= 0f)
             {
                 EndDash();
             }
+
             return;
         }
 
@@ -303,6 +347,7 @@ public class PlayerController : MonoBehaviour
                     recoilTimeLeft = recoilStepDuration;
                 }
             }
+
             return;
         }
 
@@ -318,32 +363,11 @@ public class PlayerController : MonoBehaviour
             timeSinceCast -= Time.deltaTime;
         }
 
-        // 1) Horizontal input
-        moveInput = Input.GetAxisRaw("Horizontal");
-
-        // 2) Ground check
-        wasGrounded = isGrounded;
-        isGrounded = Physics2D.OverlapCircle(
-            groundCheck.position, groundCheckRadius, groundLayer);
-        
-        // Debug ground check
-        // Debug.Log($"Ground Check: Position={groundCheck.position}, IsGrounded={isGrounded}, Layer={groundLayer.value}");
-
-        // Reset double jump when grounded
-        if (isGrounded)
-        {
-            hasDoubleJumped = false;
-            coyoteTimeCounter = coyoteTime;
-        }
-        else
-        {
-            coyoteTimeCounter -= Time.deltaTime;
-        }
-
         // 3) Jump buffer
-        if (Input.GetKeyDown(KeyCode.W))
+        if (wantJump)
         {
             jumpBufferCounter = jumpBufferTime;
+            wantJump = false;
         }
         else
         {
@@ -370,73 +394,64 @@ public class PlayerController : MonoBehaviour
         }
 
         // 5) Jump cut
-        if ((Input.GetKeyUp(KeyCode.W) || Input.GetKeyUp(KeyCode.Space)) 
-            && rb.linearVelocity.y > 0f)
+        if (wantStopJump && rb.linearVelocity.y > 0f)
         {
             rb.linearVelocity = new Vector2(
                 rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
         }
 
-        // 6) Dash
-        if (canDash && dashCooldownCounter <= 0f)
+        if (isGrounded)
         {
-            if (Input.GetKeyDown(KeyCode.LeftShift))
-            {
-                StartDash();
-            }
+            hasDoubleJumped = false;
+            coyoteTimeCounter = coyoteTime;
         }
         else
         {
-            dashCooldownCounter -= Time.deltaTime;
+            coyoteTimeCounter -= Time.deltaTime;
         }
+        
+        HandleHeal();
+    }
 
-        // 7) Attack
-        if (canAttack && timeSinceAttack <= 0)
+    public void StartHeal()
+    {
+        wantHeal = true;
+    }
+
+    public void EndHeal()
+    {
+        isHealing.Value = false;
+        wantHeal = false;
+    }
+
+    private void HandleHeal()
+    {
+        if(!IsOwner)
+            return;
+        
+        if (!wantHeal)
         {
-            if (Input.GetMouseButtonDown(0)) // Left mouse button
-            {
-                Attack();
-            }
+            isHealing.Value = false;
+            return;
         }
-
-        // 8) Spell Cast
-        if (canCast && timeSinceCast <= 0 && mana >= manaSpellCost)
-        {
-            if (Input.GetButtonDown("CastSpell"))
-            {
-                CastSpell();
-            }
-        }
-
-        // 8) Update Animator parameters
-        bool walking = Mathf.Abs(moveInput) > 0.1f && isGrounded;
-        bool jumping = !isGrounded;
-        animator.SetBool("Walking", walking);
-        animator.SetBool("Jumping", jumping);
-        animator.SetBool("Casting", isCasting);
-
-        // Flip based on direction
-        if (moveInput > 0f)      sr.flipX = false;
-        else if (moveInput < 0f) sr.flipX = true;
-
+        
         // Healing logic (Hollow Knight style: must hold for healTime, only heal once per hold)
         bool healButtonHeld = Input.GetMouseButton(1);
 
-        if (!isHealing && currentHealth < maxHealth && IsIdle() && healButtonHeld && !healButtonHeldLastFrame && mana > 0f)
+        if (!isHealing.Value && currentHealth < maxHealth && IsIdle() && healButtonHeld && !healButtonHeldLastFrame &&
+            mana > 0f)
         {
             // Start healing charge
-            isHealing = true;
+            isHealing.Value = true;
             healTimer = healTime;
-            animator.SetBool("Healing", true); // Optional: trigger healing animation
         }
 
-        if (isHealing)
+        if (isHealing.Value)
         {
-            // Interrupt healing if player moves, jumps, attacks, dashes, takes damage, releases the button, or runs out of mana
-            if (!IsIdle() || isDashing || isRecoiling || isAttacking || isInvulnerable || !healButtonHeld || mana <= 0f)
+            // Interrupt healing if player moves, jumps, attacks, dashes, takes damage, or runs out of mana
+            if (!IsIdle() || isDashing.Value || isRecoiling || isAttacking || isInvulnerable || mana <= 0f)
             {
-                isHealing = false;
-                animator.SetBool("Healing", false); // Optional: stop healing animation
+                isHealing.Value = false;
             }
             else
             {
@@ -446,22 +461,27 @@ public class PlayerController : MonoBehaviour
                 if (healTimer <= 0f)
                 {
                     Heal(healAmount);
-                    isHealing = false;
-                    animator.SetBool("Healing", false); // Optional: stop healing animation
+                    isHealing.Value = false;
                 }
+
                 if (manaBar != null)
                 {
                     manaBar.UpdateManaBar(mana, maxMana);
                 }
             }
         }
-
+        
         healButtonHeldLastFrame = healButtonHeld;
     }
 
     void FixedUpdate()
     {
-        if (isDashing)
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        if (isDashing.Value)
         {
             rb.linearVelocity = dashDirection * dashSpeed;
             return;
@@ -476,30 +496,89 @@ public class PlayerController : MonoBehaviour
         }
 
         // Apply horizontal movement
-        rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+        rb.linearVelocity = new Vector2(moveInput.Value * moveSpeed, rb.linearVelocity.y);
+    }
+
+    public void TryStartDash()
+    {
+        if (canDash && dashCooldownCounter <= 0f)
+        {
+            StartDash();
+        }
     }
 
     private void StartDash()
     {
-        isDashing = true;
+        isDashing.Value = true;
         dashTimeCounter = dashTime;
         dashCooldownCounter = dashCooldown;
-        
+
         // Set dash direction based on facing direction
         dashDirection = sr.flipX ? Vector2.left : Vector2.right;
-        
+
         // Trigger dash animation
-        animator.SetBool("Dashing", true);
-        
+        //animator.SetBool("Dashing", true);
+
         // Disable gravity during dash
         rb.gravityScale = 0f;
     }
 
+    [ServerRpc]
+    private void StartDash_ServerRpc()
+    {
+        isDashing.Value = true;
+    }
+
     private void EndDash()
     {
-        isDashing = false;
-        animator.SetBool("Dashing", false);
+        isDashing.Value = false;
+        //animator.SetBool("Dashing", false);
+
         rb.gravityScale = gravityScale;
+    }
+
+    [ServerRpc]
+    private void EndDash_ServerRpc()
+    {
+        isDashing.Value = false;
+    }
+
+    //todo: move to UI
+    private void HandleDamageFlash()
+    {
+        if (isFlashing)
+        {
+            flashTimer -= Time.deltaTime;
+            if (flashTimer <= 0)
+            {
+                flashCount++;
+                if (flashCount >= damageFlashCount * 2)
+                {
+                    isFlashing = false;
+                    sr.color = Color.white;
+                }
+                else
+                {
+                    sr.color = flashCount % 2 == 0 ? Color.white : Color.red;
+                    flashTimer = damageFlashDuration;
+                }
+            }
+        }
+    }
+
+    private void HandleInvulnerability()
+    {
+        if (isInvulnerable)
+        {
+            invulnerabilityTimer -= Time.deltaTime;
+            if (invulnerabilityTimer <= 0)
+            {
+                isInvulnerable = false;
+                sr.color = Color.white;
+
+                SpawnBloodSpurt();
+            }
+        }
     }
 
     private void Hit(Transform _attackTransform, Vector2 _attackArea)
@@ -524,23 +603,34 @@ public class PlayerController : MonoBehaviour
             Enemy enemy = objectsToHit[i].GetComponent<Enemy>();
             if (enemy != null)
             {
-                enemy.TakeDamage(attackDamage);
+                enemy.ApplyDamage_ServerRpc(attackDamage);
+
                 didHitEnemy = true;
             }
         }
+
         if (didHitEnemy)
         {
             Debug.Log("hit");
             // Gain mana when hitting an enemy
             mana += manaGain;
+
+            //todo: should be encapsulated inside setmana()
             mana = Mathf.Clamp(mana, 0, maxMana);
             if (manaBar != null)
             {
                 manaBar.UpdateManaBar(mana, maxMana);
             }
+
             // Apply recoil when hitting an enemy
             ApplyRecoil();
         }
+    }
+
+    [ServerRpc]
+    private void PlayAttackAnimation_ServerRpc()
+    {
+        animator.SetTrigger("Attacking");
     }
 
     private void ApplyRecoil()
@@ -548,53 +638,76 @@ public class PlayerController : MonoBehaviour
         isRecoiling = true;
         currentRecoilStep = 0;
         recoilTimeLeft = recoilStepDuration;
-        
+
         // Calculate recoil direction based on facing direction
         recoilDirection = new Vector2(
             sr.flipX ? recoilXSpeed : -recoilXSpeed,
             recoilYSpeed
         );
-        
+
         // Apply initial recoil velocity
         rb.linearVelocity = recoilDirection;
+    }
+
+    public void TryAttack()
+    {
+        if (canAttack && timeSinceAttack <= 0)
+        {
+            Attack();
+        }
     }
 
     private void Attack()
     {
         isAttacking = true;
         timeSinceAttack = timeBetweenAttack;
-        
+
         // Y-axis directional input
         float verticalInput = Input.GetAxisRaw("Vertical");
-        lastAttackDirection = new Vector2(moveInput, verticalInput).normalized;
-        
+        lastAttackDirection = new Vector2(moveInput.Value, verticalInput).normalized;
+
         // Trigger attack animation
         animator.SetTrigger("Attacking");
-        
+        PlayAttackAnimation_ServerRpc();
+
+        Vector2 attackArea;
+        Transform attackTransform;
+        float rotation = 0f;
+
         // Perform attack based on direction
         if (Mathf.Abs(verticalInput) > 0.1f)
         {
             if (verticalInput > 0)
             {
                 // Up attack
-                Hit(upAttackTransform, upAttackArea);
-                SpawnSlashEffect(upAttackTransform.position, 90f);
+                attackTransform = upAttackTransform;
+                rotation = 90f;
+                attackArea = upAttackArea;
             }
             else
             {
-                // Down attack
-                Hit(downAttackTransform, downAttackArea);
-                SpawnSlashEffect(downAttackTransform.position, -90f);
+                attackTransform = downAttackTransform;
+                rotation = -90f;
+                attackArea = downAttackArea;
+                ;
             }
         }
         else
         {
-            // Side attack
-            Hit(sideAttackTransform, sideAttackArea);
-            float rotation = sr.flipX ? 180f : 0f;
-            SpawnSlashEffect(sideAttackTransform.position, rotation);
+            attackTransform = sideAttackTransform;
+            rotation = sr.flipX ? 180f : 0f;
+            attackArea = sideAttackArea;
         }
-        
+
+        Hit(attackTransform, attackArea);
+        SpawnSlashEffect(attackTransform.position, rotation);
+
+        //todo: Remove variables from rpc to make them less
+        if (!IsServer)
+            SpawnSlashEffect_ServerRpc(attackTransform.position, rotation);
+        else
+            SpawnSlashEffect_ClientRpc(attackTransform.position, rotation);
+
         // Reset attack state after animation
         Invoke(nameof(ResetAttack), timeBetweenAttack);
     }
@@ -626,6 +739,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    [ServerRpc]
+    private void SpawnSlashEffect_ServerRpc(Vector3 position, float rotation)
+    {
+        SpawnSlashEffect(position, rotation);
+        SpawnSlashEffect_ClientRpc(position, rotation);
+    }
+
+    [ClientRpc]
+    private void SpawnSlashEffect_ClientRpc(Vector3 position, float rotation)
+    {
+        SpawnSlashEffect(position, rotation);
+    }
+
     private void SpawnBloodSpurt()
     {
         if (bloodSpurt != null)
@@ -651,13 +777,13 @@ public class PlayerController : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawWireCube(sideAttackTransform.position, sideAttackArea);
         }
-        
+
         if (downAttackTransform != null)
         {
             Gizmos.color = Color.blue;
             Gizmos.DrawWireCube(downAttackTransform.position, downAttackArea);
         }
-        
+
         if (upAttackTransform != null)
         {
             Gizmos.color = Color.green;
@@ -667,7 +793,11 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        if (isInvulnerable) return;
+        if(!IsOwner)
+            return;
+        
+        if (isInvulnerable)
+            return;
 
         currentHealth -= amount;
         Debug.Log($"Player took {amount} damage. Health: {currentHealth}/{maxHealth}");
@@ -715,47 +845,70 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
+        if (!HasAuthority)
+            return;
+
         Debug.Log("Player died!");
         // Trigger death animation if you have one
         animator.SetTrigger("Die");
-        
+
         // Disable player controls
         enabled = false;
-        
+
         // You might want to trigger game over or respawn logic here
         // For now, we'll just destroy the player
         Destroy(gameObject);
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
-        // Make sure time scale is reset when the player is destroyed
-        Time.timeScale = 1f;
+        base.OnDestroy();
+
+        if (HasAuthority)
+        {
+            // Make sure time scale is reset when the player is destroyed
+            Time.timeScale = 1f;
+        }
     }
 
     private bool IsIdle()
     {
-        return Mathf.Abs(moveInput) < 0.01f && isGrounded && !isDashing && !isRecoiling && !isAttacking && !isInvulnerable;
+        return Mathf.Abs(moveInput.Value) < 0.01f && isGrounded && !isDashing.Value && !isRecoiling && !isAttacking &&
+               !isInvulnerable;
     }
 
     private void Heal(int amount)
     {
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
-        if (healthBar != null)
+
+        if (IsOwner)
         {
-            healthBar.UpdateHealthBar(currentHealth, maxHealth);
+            if (healthBar != null)
+            {
+                healthBar.UpdateHealthBar(currentHealth, maxHealth);
+            }
         }
         // Optionally trigger a heal animation or effect here
     }
 
+    public void TryCastSpell()
+    {
+        if (canCast && timeSinceCast <= 0 && mana >= manaSpellCost)
+        {
+            CastSpell();
+        }
+    }
+    
+    
+
     private void CastSpell()
     {
-        isCasting = true;
+        isCasting.Value = true;
         timeSinceCast = timeBetweenCast;
-        
+
         // Y-axis directional input
         float verticalInput = Input.GetAxisRaw("Vertical");
-        
+
         // Deduct mana cost
         mana -= manaSpellCost;
         mana = Mathf.Clamp(mana, 0, maxMana);
@@ -775,14 +928,16 @@ public class PlayerController : MonoBehaviour
                     Debug.LogError("Up spell prefab is not assigned!");
                     return;
                 }
+
                 if (upSpellSpawnPoint == null)
                 {
-                    Debug.LogError("Up spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Up Spell Spawn Point field in the PlayerController component.");
+                    Debug.LogError(
+                        "Up spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Up Spell Spawn Point field in the PlayerController component.");
                     return;
                 }
 
                 // Start the delayed spawn coroutine for up spell
-                StartCoroutine(DelayedUpSpellSpawn());
+                UpSpellSpawn_ServerRpc();
             }
             else
             {
@@ -790,7 +945,7 @@ public class PlayerController : MonoBehaviour
                 if (downSpell != null)
                 {
                     downSpell.SetActive(false); // Reset if needed
-                    downSpell.SetActive(true);  // Activate effect
+                    downSpell.SetActive(true); // Activate effect
                 }
             }
         }
@@ -802,18 +957,26 @@ public class PlayerController : MonoBehaviour
                 Debug.LogError("Side spell prefab is not assigned!");
                 return;
             }
+
             if (sideSpellSpawnPoint == null)
             {
-                Debug.LogError("Side spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Side Spell Spawn Point field in the PlayerController component.");
+                Debug.LogError(
+                    "Side spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Side Spell Spawn Point field in the PlayerController component.");
                 return;
             }
 
-            // Start the delayed spawn coroutine
-            StartCoroutine(DelayedFireballSpawn());
+            //todo: Add client prediction to fireball spawn
+            FireballSpawn_ServerRpc();
         }
 
         // Reset casting state after animation
         Invoke(nameof(ResetCasting), timeBetweenCast);
+    }
+
+    [ServerRpc]
+    private void UpSpellSpawn_ServerRpc()
+    {
+        StartCoroutine(DelayedUpSpellSpawn());
     }
 
     private IEnumerator DelayedUpSpellSpawn()
@@ -824,8 +987,10 @@ public class PlayerController : MonoBehaviour
         // Use the spawn point's position
         Vector3 spawnPosition = upSpellSpawnPoint.position;
         Debug.Log($"Up spell spawn point position: {spawnPosition}");
-        
+
         GameObject spell = Instantiate(upSpell, spawnPosition, Quaternion.Euler(0, 0, 90));
+        spell.GetComponent<NetworkObject>().Spawn();
+
         if (spell == null)
         {
             Debug.LogError("Failed to instantiate up spell!");
@@ -834,6 +999,23 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("Up spell instantiated successfully!");
         }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsLocalPlayer)
+        {
+            if (Camera.main != null)
+            {
+                Camera.main.GetComponent<CameraFollow>().target = transform;
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void FireballSpawn_ServerRpc()
+    {
+        StartCoroutine(DelayedFireballSpawn());
     }
 
     private IEnumerator DelayedFireballSpawn()
@@ -847,8 +1029,10 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"Side spell spawn point position: {spawnPosition}");
         Debug.Log($"Player position: {transform.position}");
         Debug.Log($"Side spell spawn point is child of player: {sideSpellSpawnPoint.IsChildOf(transform)}");
-        
+
         GameObject fireball = Instantiate(sideSpell, spawnPosition, Quaternion.Euler(0, 0, rotation));
+        fireball.GetComponent<NetworkObject>().Spawn();
+
         if (fireball == null)
         {
             Debug.LogError("Failed to instantiate fireball!");
@@ -861,6 +1045,6 @@ public class PlayerController : MonoBehaviour
 
     private void ResetCasting()
     {
-        isCasting = false;
+        isCasting.Value = false;
     }
 }
