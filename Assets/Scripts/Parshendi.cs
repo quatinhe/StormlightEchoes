@@ -165,4 +165,41 @@ public class Parshendi : Enemy
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
+
+    protected override void Die()
+    {
+        base.Die();
+        
+        // Notify ProgressionManager of kill
+        if (ProgressionManager.Instance != null)
+        {
+            ProgressionManager.Instance.OnParshendiKilled();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (!HasAuthority) return;
+
+        // Check if the collision is with the player
+        PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+        if (player != null)
+        {
+            // Deal damage to the player
+            player.TakeDamage(damage);
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (!HasAuthority) return;
+
+        // Check if the trigger is with the player
+        PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+        if (player != null)
+        {
+            // Deal damage to the player
+            player.TakeDamage(damage);
+        }
+    }
 } 

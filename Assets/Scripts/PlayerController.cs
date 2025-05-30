@@ -20,7 +20,7 @@ public class PlayerController : NetworkBehaviour
     public float coyoteTime = 0.2f;
 
     [Tooltip("Can the player double jump?")]
-    public bool canDoubleJump = true;
+    public NetworkVariable<bool> canDoubleJump = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("Dash")] [Tooltip("Can the player dash?")]
     public bool canDash = true;
@@ -65,6 +65,9 @@ public class PlayerController : NetworkBehaviour
 
     [Header("Spellcasting")] [Tooltip("Can the player cast spells?")]
     public bool canCast = true;
+
+    [Tooltip("Can the player cast side spells?")]
+    public NetworkVariable<bool> canCastSideSpell = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Tooltip("Time between spell casts")] public float timeBetweenCast = 0.5f;
 
@@ -384,7 +387,7 @@ public class PlayerController : NetworkBehaviour
                 jumpBufferCounter = 0f;
                 coyoteTimeCounter = 0f;
             }
-            else if (canDoubleJump && !hasDoubleJumped)
+            else if (canDoubleJump.Value && !hasDoubleJumped)
             {
                 // Double jump
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
@@ -952,6 +955,12 @@ public class PlayerController : NetworkBehaviour
         else
         {
             // Side spell
+            if (!canCastSideSpell.Value)
+            {
+                Debug.Log("Side spell not unlocked yet!");
+                return;
+            }
+
             if (sideSpell == null)
             {
                 Debug.LogError("Side spell prefab is not assigned!");
@@ -1046,5 +1055,17 @@ public class PlayerController : NetworkBehaviour
     private void ResetCasting()
     {
         isCasting.Value = false;
+    }
+
+    public void EnableDoubleJump()
+    {
+        if (!IsServer) return;
+        canDoubleJump.Value = true;
+    }
+
+    public void EnableSideSpell()
+    {
+        if (!IsServer) return;
+        canCastSideSpell.Value = true;
     }
 }
