@@ -800,7 +800,7 @@ Transform:
   m_GameObject: {fileID: 78994389}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -30.7, y: 32.5, z: -0.067150764}
+  m_LocalPosition: {x: 33.7, y: 16, z: -0.067150764}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5155,7 +5155,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  parshendiKillsRequired: 1
+  parshendiKillsRequired: 8
 --- !u!4 &566853192
 Transform:
   m_ObjectHideFlags: 0
@@ -5867,7 +5867,7 @@ Transform:
   m_GameObject: {fileID: 626549292}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -72.4, y: 19.5, z: 0.068200335}
+  m_LocalPosition: {x: -79.6, y: 20.8, z: 0.068200335}
   m_LocalScale: {x: 0.31, y: 0.25, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9865,7 +9865,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  killsRequired: 5
+  killsRequired: 8
   unlockMessagePanel: {fileID: 703663528}
   unlockMessageText: {fileID: 2098717933}
   messageDisplayTime: 4
