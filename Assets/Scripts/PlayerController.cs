@@ -1074,4 +1074,10 @@ public class PlayerController : NetworkBehaviour
         if (!IsServer) return;
         canCastSideSpell.Value = true;
     }
+
+    public void EnableDash()
+    {
+        if (!IsServer) return;
+        canDash = true;
+    }
 }

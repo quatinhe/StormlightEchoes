@@ -17,10 +17,16 @@ public class SpellTeacherNPC : NetworkBehaviour
     
     [Header("Dialogue Content")]
     [TextArea(3, 10)]
-    public List<string> dialoguePages = new List<string>
+    public List<string> dialoguePagesBeforeDash = new List<string>
     {
         "Hello Stranger..",
         "It has been a long time since I've seen someone here in Uthiru"
+    };
+    [TextArea(3, 10)]
+    public List<string> dialoguePagesAfterDash = new List<string>
+    {
+        "That was impressive.",
+        "You have proven yourself. Good luck on your journey!"
     };
 
     [Header("Tutorial Message")]
@@ -36,6 +42,8 @@ public class SpellTeacherNPC : NetworkBehaviour
     private PlayerController nearbyPlayer;
     private bool isInDialogue = false;
     private int currentDialoguePage = 0;
+    private List<string> currentDialoguePages;
+    private bool dashUnlocked = false;
 
     private void Start()
     {
@@ -50,6 +58,8 @@ public class SpellTeacherNPC : NetworkBehaviour
         {
             tutorialMessagePanel.SetActive(false);
         }
+
+        currentDialoguePages = dialoguePagesBeforeDash;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -85,6 +95,13 @@ public class SpellTeacherNPC : NetworkBehaviour
     private void Update()
     {
         if (!IsServer) return;
+
+        // Check if dash is unlocked
+        dashUnlocked = FlyingParshendiProgressionManager.Instance != null &&
+                       FlyingParshendiProgressionManager.Instance.IsDashUnlocked();
+
+        // Switch dialogue set if needed
+        currentDialoguePages = dashUnlocked ? dialoguePagesAfterDash : dialoguePagesBeforeDash;
 
         if (playerInRange && nearbyPlayer != null)
         {
@@ -125,11 +142,12 @@ public class SpellTeacherNPC : NetworkBehaviour
     {
         currentDialoguePage++;
         
-        if (currentDialoguePage >= dialoguePages.Count)
+        if (currentDialoguePage >= currentDialoguePages.Count)
         {
-            // End of dialogue
             CloseDialogue();
-            TeachSideSpell();
+            // Only teach side spell if dash is not unlocked yet
+            if (!dashUnlocked)
+                TeachSideSpell();
         }
         else
         {
@@ -139,9 +157,9 @@ public class SpellTeacherNPC : NetworkBehaviour
 
     private void ShowCurrentDialoguePage()
     {
-        if (dialogueText != null && currentDialoguePage < dialoguePages.Count)
+        if (dialogueText != null && currentDialoguePage < currentDialoguePages.Count)
         {
-            dialogueText.text = dialoguePages[currentDialoguePage];
+            dialogueText.text = currentDialoguePages[currentDialoguePage];
         }
     }
 

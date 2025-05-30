@@ -312,4 +312,13 @@ public class Parshendi_Fly : Enemy
             Gizmos.DrawLine(transform.position, chargeTarget);
         }
     }
+
+    protected override void Die()
+    {
+        base.Die();
+        if (FlyingParshendiProgressionManager.Instance != null)
+        {
+            FlyingParshendiProgressionManager.Instance.OnFlyingParshendiKilled();
+        }
+    }
 } 
