@@ -906,9 +906,6 @@ public class PlayerController : NetworkBehaviour
 
     private void CastSpell()
     {
-        isCasting.Value = true;
-        timeSinceCast = timeBetweenCast;
-
         // Y-axis directional input
         float verticalInput = Input.GetAxisRaw("Vertical");
 
@@ -923,6 +920,9 @@ public class PlayerController : NetworkBehaviour
         // Cast spell based on direction
         if (Mathf.Abs(verticalInput) > 0.1f)
         {
+            isCasting.Value = true;
+            timeSinceCast = timeBetweenCast;
+
             if (verticalInput > 0)
             {
                 // Up spell
@@ -951,6 +951,9 @@ public class PlayerController : NetworkBehaviour
                     downSpell.SetActive(true); // Activate effect
                 }
             }
+
+            // Reset casting state after animation
+            Invoke(nameof(ResetCasting), timeBetweenCast);
         }
         else
         {
@@ -960,6 +963,9 @@ public class PlayerController : NetworkBehaviour
                 Debug.Log("Side spell not unlocked yet!");
                 return;
             }
+
+            isCasting.Value = true;
+            timeSinceCast = timeBetweenCast;
 
             if (sideSpell == null)
             {
@@ -976,10 +982,10 @@ public class PlayerController : NetworkBehaviour
 
             //todo: Add client prediction to fireball spawn
             FireballSpawn_ServerRpc();
-        }
 
-        // Reset casting state after animation
-        Invoke(nameof(ResetCasting), timeBetweenCast);
+            // Reset casting state after animation
+            Invoke(nameof(ResetCasting), timeBetweenCast);
+        }
     }
 
     [ServerRpc]
