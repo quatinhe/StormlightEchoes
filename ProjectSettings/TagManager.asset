@@ -3,7 +3,12 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - plataform
+  - Nodo
+  - obstacle
+  - enemi
+  - enemy
   layers:
   - Default
   - TransparentFX
@@ -12,8 +17,8 @@ TagManager:
   - Water
   - UI
   - Attackable
-  - 
-  - 
+  - player
+  - enemy
   - 
   - 
   - 
