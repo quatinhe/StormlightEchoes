@@ -267,11 +267,15 @@ public class PlayerController : NetworkBehaviour
         {
             return;
         }
+        
+        healthBar = GameObject.Find("HealthBarContainer").GetComponent<HealthBarUI>();
 
         if (healthBar != null)
         {
             healthBar.SetHealthImmediate(currentHealth, maxHealth);
         }
+        
+        manaBar = GameObject.Find("ManaBarContainer").GetComponent<ManaBarUI>();
 
         if (manaBar != null)
         {
