@@ -214,8 +214,11 @@ public class PlayerController : NetworkBehaviour
 
     private bool healButtonHeldLastFrame;
 
+    private RigidbodyConstraints2D originalConstraints;
+
     public static PlayerController Instace { get; private set; }
 
+    public NetworkVariable<bool> movementLocked = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     public void AddMovementInput(Vector2 input)
     {
@@ -238,6 +241,10 @@ public class PlayerController : NetworkBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         sr = GetComponent<SpriteRenderer>();
+
+        // Store original constraints
+        if (rb != null)
+            originalConstraints = rb.constraints;
 
         // Set initial gravity scale
         rb.gravityScale = gravityScale;
@@ -296,10 +303,33 @@ public class PlayerController : NetworkBehaviour
         animator.SetBool("Walking", walking);
         animator.SetBool("Jumping", jumping);
 
+        // Only process input for the local player
         if (!IsOwner)
         {
             return;
         }
+        Debug.Log($"[PlayerController] IsOwner: {IsOwner}, movementLocked: {movementLocked.Value}");
+
+        // Lock movement if movementLocked is true
+        if (movementLocked.Value)
+        {
+            moveInput.Value = 0f;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.constraints = RigidbodyConstraints2D.FreezeAll;
+            }
+            Debug.Log("[PlayerController] Movement is locked and Rigidbody is frozen!");
+            return;
+        }
+        else if (rb != null && rb.constraints != originalConstraints)
+        {
+            rb.constraints = originalConstraints;
+        }
+
+        // --- HANDLE HORIZONTAL MOVEMENT INPUT HERE ---
+        float horizontal = Input.GetAxisRaw("Horizontal"); // Handles A/D, Left/Right, and controller
+        moveInput.Value = horizontal;
 
         // Handle time slow
         if (isTimeSlowed)
