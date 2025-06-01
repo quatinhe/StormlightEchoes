@@ -895,9 +895,6 @@ public class PlayerController : NetworkBehaviour
         // Y-axis directional input
         float verticalInput = Input.GetAxisRaw("Vertical");
 
-        // Deduct mana cost
-        currentMana.Value = Mathf.Clamp(currentMana.Value - manaSpellCost, 0, maxMana);
-
         // Cast spell based on direction
         if (Mathf.Abs(verticalInput) > 0.1f)
         {
@@ -919,12 +916,18 @@ public class PlayerController : NetworkBehaviour
                         "Up spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Up Spell Spawn Point field in the PlayerController component.");
                     return;
                 }
+                
+                // Deduct mana cost
+                currentMana.Value = Mathf.Clamp(currentMana.Value - manaSpellCost, 0, maxMana);
 
                 // Start the delayed spawn coroutine for up spell
                 UpSpellSpawn_ServerRpc();
             }
             else
             {
+                // Deduct mana cost
+                currentMana.Value = Mathf.Clamp(currentMana.Value - manaSpellCost, 0, maxMana);
+                
                 // Down spell (activate child GameObject)
                 if (downSpell != null)
                 {
@@ -945,9 +948,6 @@ public class PlayerController : NetworkBehaviour
                 return;
             }
 
-            isCasting.Value = true;
-            timeSinceCast = timeBetweenCast;
-
             if (sideSpell == null)
             {
                 Debug.LogError("Side spell prefab is not assigned!");
@@ -960,6 +960,12 @@ public class PlayerController : NetworkBehaviour
                     "Side spell spawn point is not assigned! Please create an empty GameObject as a child of the player and assign it to the Side Spell Spawn Point field in the PlayerController component.");
                 return;
             }
+                        
+            // Deduct mana cost
+            currentMana.Value = Mathf.Clamp(currentMana.Value - manaSpellCost, 0, maxMana);
+
+            isCasting.Value = true;
+            timeSinceCast = timeBetweenCast;
 
             //todo: Add client prediction to fireball spawn
             FireballSpawn_ServerRpc();
