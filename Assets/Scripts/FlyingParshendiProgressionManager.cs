@@ -7,7 +7,7 @@ public class FlyingParshendiProgressionManager : NetworkBehaviour
 {
     public static FlyingParshendiProgressionManager Instance { get; private set; }
 
-    public int killsRequired = 10;
+    public int killsRequired = 5;
     private int currentKills = 0;
 
     [Header("Unlock Message UI")]

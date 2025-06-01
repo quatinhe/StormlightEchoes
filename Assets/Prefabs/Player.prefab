@@ -477,7 +477,7 @@ MonoBehaviour:
   coyoteTime: 0.2
   canDoubleJump:
     m_InternalValue: 0
-  canDash: 1
+  canDash: 0
   dashSpeed: 50
   dashTime: 0.3
   dashCooldown: 0.5

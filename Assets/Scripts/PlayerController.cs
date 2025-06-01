@@ -24,7 +24,7 @@ public class PlayerController : NetworkBehaviour
         NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("Dash")] [Tooltip("Can the player dash?")]
-    public bool canDash = true;
+    public bool canDash = false;
 
     [Tooltip("How fast the dash is")] public float dashSpeed = 30f;
     [Tooltip("How long the dash lasts")] public float dashTime = 0.3f;
