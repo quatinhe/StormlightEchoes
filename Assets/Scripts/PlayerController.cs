@@ -571,7 +571,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private void Hit(Transform _attackTransform, Vector2 _attackArea)
+    private void Hit(Transform _attackTransform, Vector2 _attackArea, bool isUpAttack)
     {
         // Calculate the position based on facing direction
         Vector2 hitPosition = _attackTransform.position;
@@ -596,6 +596,12 @@ public class PlayerController : NetworkBehaviour
                 enemy.ApplyDamage_ServerRpc(attackDamage);
 
                 didHitEnemy = true;
+            }
+            // Only destroy destructible if up attack
+            DestructibleMaterial destructible = objectsToHit[i].GetComponent<DestructibleMaterial>();
+            if (destructible != null && isUpAttack)
+            {
+                destructible.DestroySelf();
             }
         }
 
@@ -657,6 +663,7 @@ public class PlayerController : NetworkBehaviour
         Vector2 attackArea;
         Transform attackTransform;
         float rotation = 0f;
+        bool isUpAttack = false;
 
         // Perform attack based on direction
         if (Mathf.Abs(verticalInput) > 0.1f)
@@ -667,6 +674,7 @@ public class PlayerController : NetworkBehaviour
                 attackTransform = upAttackTransform;
                 rotation = 90f;
                 attackArea = upAttackArea;
+                isUpAttack = true;
             }
             else
             {
@@ -682,7 +690,8 @@ public class PlayerController : NetworkBehaviour
             attackArea = sideAttackArea;
         }
 
-        Hit(attackTransform, attackArea);
+        // Pass isUpAttack to Hit
+        Hit(attackTransform, attackArea, isUpAttack);
         SpawnSlashEffect(attackTransform.position, rotation);
 
         //todo: Remove variables from rpc to make them less

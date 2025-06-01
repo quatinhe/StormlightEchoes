@@ -6,7 +6,7 @@ public class ProgressionManager : NetworkBehaviour
     public static ProgressionManager Instance { get; private set; }
 
     [Header("Progression Settings")]
-    public int parshendiKillsRequired = 10;
+    public int parshendiKillsRequired = 1;
     
     private NetworkVariable<int> parshendiKills = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<bool> doubleJumpUnlocked = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -42,7 +42,7 @@ public class ProgressionManager : NetworkBehaviour
         doubleJumpUnlocked.Value = true;
         
         // Find all player controllers and enable double jump
-        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         foreach (PlayerController player in players)
         {
             player.EnableDoubleJump();

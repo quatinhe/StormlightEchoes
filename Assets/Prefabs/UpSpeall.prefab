@@ -15,8 +15,8 @@ GameObject:
   - component: {fileID: 639473298137337106}
   - component: {fileID: -3678829185380545270}
   m_Layer: 0
-  m_Name: Up Spell Explosion
-  m_TagString: Untagged
+  m_Name: UpSpeall
+  m_TagString: UpSpell
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

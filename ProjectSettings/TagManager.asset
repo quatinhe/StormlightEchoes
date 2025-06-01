@@ -9,6 +9,7 @@ TagManager:
   - obstacle
   - enemi
   - enemy
+  - UpSpell
   layers:
   - Default
   - TransparentFX
