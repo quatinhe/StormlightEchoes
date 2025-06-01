@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using Object = System.Object;
 
 public class Parshendi : Enemy
 {
@@ -33,22 +35,6 @@ public class Parshendi : Enemy
         }
     }
 
-    private void FixedUpdate()
-    {
-        if (HasAuthority)
-        {
-            //todo: temporary
-            if (!playerTransform)
-            {
-                PlayerController controller = FindFirstObjectByType<PlayerController>();
-                if (controller)
-                {
-                    playerTransform = controller.transform;
-                }
-            }
-        }
-    }
-
     protected override void Update()
     {
         base.Update();
@@ -57,9 +43,24 @@ public class Parshendi : Enemy
 
     protected override void UpdateBehavior()
     {
-        if(!HasAuthority)
-            return;
+        /*if(!HasAuthority)
+            return;*/
         
+        Transform nearestPlayer = null;
+        float minDistance = float.MaxValue;
+        
+        PlayerController[] allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (var player in allPlayers)
+        {
+            float distance = Vector2.Distance(transform.position, player.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearestPlayer = player.transform;
+            }
+        }
+        
+        playerTransform = nearestPlayer;
         if (playerTransform == null) return;
 
         // Calculate distance to player
@@ -119,9 +120,6 @@ public class Parshendi : Enemy
 
     protected override void Attack()
     {
-        if(!HasAuthority)
-            return;
-        
         // Check if player is still in range
         if (Vector2.Distance(transform.position, playerTransform.position) <= attackRange)
         {

@@ -20,7 +20,8 @@ public class PlayerController : NetworkBehaviour
     public float coyoteTime = 0.2f;
 
     [Tooltip("Can the player double jump?")]
-    public NetworkVariable<bool> canDoubleJump = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> canDoubleJump = new NetworkVariable<bool>(false,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("Dash")] [Tooltip("Can the player dash?")]
     public bool canDash = true;
@@ -67,7 +68,8 @@ public class PlayerController : NetworkBehaviour
     public bool canCast = true;
 
     [Tooltip("Can the player cast side spells?")]
-    public NetworkVariable<bool> canCastSideSpell = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<bool> canCastSideSpell = new NetworkVariable<bool>(false,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Tooltip("Time between spell casts")] public float timeBetweenCast = 0.5f;
 
@@ -131,9 +133,6 @@ public class PlayerController : NetworkBehaviour
     [Tooltip("How long the time slow effect lasts")]
     public float hitTimeDuration = 0.1f;
 
-    [Tooltip("Reference to the health bar UI")]
-    public HealthBarUI healthBar;
-
     [Header("Healing")] [Tooltip("How long it takes to heal one health")]
     public float healTime = 1.5f;
 
@@ -141,7 +140,8 @@ public class PlayerController : NetworkBehaviour
     public int healAmount = 1;
 
     [Header("Mana Settings")] [Tooltip("Current mana of the player")]
-    public float mana = 100f;
+    public NetworkVariable<float> currentMana = new NetworkVariable<float>(100f, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
 
     [Tooltip("How fast mana drains while healing (per second)")]
     public float manaDrainSpeed = 20f;
@@ -151,9 +151,6 @@ public class PlayerController : NetworkBehaviour
 
     [Tooltip("Maximum mana the player can have")]
     public float maxMana = 100f;
-
-    [Tooltip("Reference to the mana bar UI")]
-    public ManaBarUI manaBar;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -197,7 +194,9 @@ public class PlayerController : NetworkBehaviour
 
     private float timeSinceCast;
 
-    private int currentHealth;
+    private NetworkVariable<int> currentHealth = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
+
     private bool isInvulnerable;
     private float invulnerabilityTimer;
     private float flashTimer;
@@ -207,6 +206,7 @@ public class PlayerController : NetworkBehaviour
     private bool isTimeSlowed;
 
     private bool wantHeal = false;
+
     private NetworkVariable<bool> isHealing = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Owner);
 
@@ -215,6 +215,7 @@ public class PlayerController : NetworkBehaviour
     private bool healButtonHeldLastFrame;
 
     public static PlayerController Instace { get; private set; }
+
 
     public void AddMovementInput(Vector2 input)
     {
@@ -257,29 +258,15 @@ public class PlayerController : NetworkBehaviour
         isDashing.OnValueChanged += (value, newValue) => animator.SetBool("Dashing", newValue);
         isHealing.OnValueChanged += (value, newValue) => animator.SetBool("Healing", newValue);
         isCasting.OnValueChanged += (value, newValue) => animator.SetBool("Casting", newValue);
+
+        currentHealth.OnValueChanged += OnHealthChanged;
     }
 
     void Start()
     {
-        currentHealth = maxHealth;
-
-        if (!IsLocalPlayer)
+        if (IsOwner)
         {
-            return;
-        }
-        
-        healthBar = GameObject.Find("HealthBarContainer").GetComponent<HealthBarUI>();
-
-        if (healthBar != null)
-        {
-            healthBar.SetHealthImmediate(currentHealth, maxHealth);
-        }
-        
-        manaBar = GameObject.Find("ManaBarContainer").GetComponent<ManaBarUI>();
-
-        if (manaBar != null)
-        {
-            manaBar.SetManaImmediate(mana, maxMana);
+            currentHealth.Value = maxHealth;
         }
     }
 
@@ -416,7 +403,7 @@ public class PlayerController : NetworkBehaviour
         {
             coyoteTimeCounter -= Time.deltaTime;
         }
-        
+
         HandleHeal();
     }
 
@@ -433,20 +420,21 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleHeal()
     {
-        if(!IsOwner)
+        if (!IsOwner)
             return;
-        
+
         if (!wantHeal)
         {
             isHealing.Value = false;
             return;
         }
-        
+
         // Healing logic (Hollow Knight style: must hold for healTime, only heal once per hold)
         bool healButtonHeld = Input.GetMouseButton(1);
 
-        if (!isHealing.Value && currentHealth < maxHealth && IsIdle() && healButtonHeld && !healButtonHeldLastFrame &&
-            mana > 0f)
+        if (!isHealing.Value && currentHealth.Value < maxHealth && IsIdle() && healButtonHeld &&
+            !healButtonHeldLastFrame &&
+            currentMana.Value > 0f)
         {
             // Start healing charge
             isHealing.Value = true;
@@ -456,28 +444,23 @@ public class PlayerController : NetworkBehaviour
         if (isHealing.Value)
         {
             // Interrupt healing if player moves, jumps, attacks, dashes, takes damage, or runs out of mana
-            if (!IsIdle() || isDashing.Value || isRecoiling || isAttacking || isInvulnerable || mana <= 0f)
+            if (!IsIdle() || isDashing.Value || isRecoiling || isAttacking || isInvulnerable || currentMana.Value <= 0f)
             {
                 isHealing.Value = false;
             }
             else
             {
                 healTimer -= Time.deltaTime;
-                mana -= manaDrainSpeed * Time.deltaTime;
-                mana = Mathf.Clamp(mana, 0, maxMana);
+                currentMana.Value -= manaDrainSpeed * Time.deltaTime;
+                currentMana.Value = Mathf.Clamp(currentMana.Value, 0, maxMana);
                 if (healTimer <= 0f)
                 {
                     Heal(healAmount);
                     isHealing.Value = false;
                 }
-
-                if (manaBar != null)
-                {
-                    manaBar.UpdateManaBar(mana, maxMana);
-                }
             }
         }
-        
+
         healButtonHeldLastFrame = healButtonHeld;
     }
 
@@ -619,15 +602,9 @@ public class PlayerController : NetworkBehaviour
         if (didHitEnemy)
         {
             Debug.Log("hit");
-            // Gain mana when hitting an enemy
-            mana += manaGain;
 
             //todo: should be encapsulated inside setmana()
-            mana = Mathf.Clamp(mana, 0, maxMana);
-            if (manaBar != null)
-            {
-                manaBar.UpdateManaBar(mana, maxMana);
-            }
+            currentMana.Value = Mathf.Clamp(currentMana.Value += manaGain, 0, maxMana);
 
             // Apply recoil when hitting an enemy
             ApplyRecoil();
@@ -696,7 +673,6 @@ public class PlayerController : NetworkBehaviour
                 attackTransform = downAttackTransform;
                 rotation = -90f;
                 attackArea = downAttackArea;
-                ;
             }
         }
         else
@@ -800,40 +776,48 @@ public class PlayerController : NetworkBehaviour
 
     public void TakeDamage(int amount)
     {
-        if(!IsOwner)
+        if (!IsOwner)
             return;
-        
+
         if (isInvulnerable)
             return;
 
-        currentHealth -= amount;
-        Debug.Log($"Player took {amount} damage. Health: {currentHealth}/{maxHealth}");
+        currentHealth.Value -= amount;
 
-        // Update health bar
-        if (healthBar != null)
-        {
-            healthBar.UpdateHealthBar(currentHealth, maxHealth);
-        }
-
-        // Slow down time
-        SlowTime();
-
-        // Start invulnerability
         isInvulnerable = true;
         invulnerabilityTimer = invulnerabilityDuration;
 
-        // Start damage flash
-        isFlashing = true;
-        flashCount = 0;
-        flashTimer = damageFlashDuration;
-        sr.color = Color.red;
+        Debug.Log($"Player took {amount} damage. Health: {currentHealth}/{maxHealth}");
+        //OnHealthChanged(oldValue, currentHealth.Value);
+    }
 
-        // Trigger take damage animation
-        animator.SetTrigger("TakeDamage");
-
-        if (currentHealth <= 0)
+    protected void OnHealthChanged(int OldValue, int NewValue)
+    {
+        //
+        if (NewValue > OldValue)
         {
-            Die();
+            return;
+        }
+        else
+        {
+            if (IsLocalPlayer)
+            {
+                SlowTime();
+            }
+
+            // Start damage flash
+            isFlashing = true;
+            flashCount = 0;
+            flashTimer = damageFlashDuration;
+            sr.color = Color.red;
+
+            // Trigger take damage animation
+            animator.SetTrigger("TakeDamage");
+
+            if (NewValue <= 0)
+            {
+                Die();
+            }
         }
     }
 
@@ -852,22 +836,23 @@ public class PlayerController : NetworkBehaviour
 
     private void Die()
     {
-        if (!HasAuthority)
-            return;
-
-        Debug.Log("Player died!");
-        // Trigger death animation if you have one
         animator.SetTrigger("Die");
-
-        // Disable player controls
         enabled = false;
 
+        Debug.Log("Player died!");
+
         // You might want to trigger game over or respawn logic here
-        // For now, we'll just despawn the player
+        // For now, we'll just despawn the player with delay
         if (HasAuthority)
         {
-            GetComponent<NetworkObject>().Despawn();
+            StartCoroutine(DestroyPlayer(1f * Time.timeScale));
         }
+    }
+    
+    IEnumerator DestroyPlayer(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        GetComponent<NetworkObject>().Despawn();
     }
 
     public override void OnDestroy()
@@ -889,27 +874,21 @@ public class PlayerController : NetworkBehaviour
 
     private void Heal(int amount)
     {
-        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
-
-        if (IsOwner)
-        {
-            if (healthBar != null)
-            {
-                healthBar.UpdateHealthBar(currentHealth, maxHealth);
-            }
-        }
+        if(!IsOwner)
+            return;
+        
+        currentHealth.Value = Mathf.Min(currentHealth.Value + amount, maxHealth);
         // Optionally trigger a heal animation or effect here
     }
 
     public void TryCastSpell()
     {
-        if (canCast && timeSinceCast <= 0 && mana >= manaSpellCost)
+        if (canCast && timeSinceCast <= 0 && currentMana.Value >= manaSpellCost)
         {
             CastSpell();
         }
     }
-    
-    
+
 
     private void CastSpell()
     {
@@ -917,12 +896,7 @@ public class PlayerController : NetworkBehaviour
         float verticalInput = Input.GetAxisRaw("Vertical");
 
         // Deduct mana cost
-        mana -= manaSpellCost;
-        mana = Mathf.Clamp(mana, 0, maxMana);
-        if (manaBar != null)
-        {
-            manaBar.UpdateManaBar(mana, maxMana);
-        }
+        currentMana.Value = Mathf.Clamp(currentMana.Value - manaSpellCost, 0, maxMana);
 
         // Cast spell based on direction
         if (Mathf.Abs(verticalInput) > 0.1f)
@@ -1063,6 +1037,26 @@ public class PlayerController : NetworkBehaviour
         {
             Debug.Log("Fireball instantiated successfully!");
         }
+    }
+
+    public float GetCurrentHealth()
+    {
+        return currentHealth.Value;
+    }
+
+    public float GetMaxHealth()
+    {
+        return maxHealth;
+    }
+
+    public float GetCurrentMana()
+    {
+        return currentMana.Value;
+    }
+
+    public float GetMaxMana()
+    {
+        return maxMana;
     }
 
     private void ResetCasting()

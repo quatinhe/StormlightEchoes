@@ -275,7 +275,7 @@ GameObject:
   - component: {fileID: 9067217734434448902}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -526,7 +526,8 @@ MonoBehaviour:
   healthBar: {fileID: 0}
   healTime: 1.5
   healAmount: 1
-  mana: 100
+  currentMana:
+    m_InternalValue: 100
   manaDrainSpeed: 20
   manaGain: 10
   maxMana: 100

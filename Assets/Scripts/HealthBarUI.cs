@@ -11,6 +11,9 @@ public class HealthBarUI : NetworkBehaviour
     public float updateSpeed = 10f;
     [Tooltip("The background image of the health bar")]
     public Image healthBarBackground;
+    
+    private GameObject owningPlayer;
+    private PlayerController owningController;
 
     private float targetFill;
     private float currentFill;
@@ -31,8 +34,6 @@ public class HealthBarUI : NetworkBehaviour
 
     void Start()
     {
-        
-        
         if (healthBarFill == null)
         {
             Debug.LogError("Health Bar Fill image is not assigned!");
@@ -47,11 +48,37 @@ public class HealthBarUI : NetworkBehaviour
 
     void Update()
     {
+        //todo: refactor to event/delegate
+        InitOwningPlayer();
+        
+        if(!owningController)
+            return;
+        
+        //todo: change to event/delegate
+        UpdateHealthBar(owningController.GetCurrentHealth(), owningController.GetMaxHealth());
+        
         // Smoothly update the health bar fill
         if (currentFill != targetFill)
         {
             currentFill = Mathf.Lerp(currentFill, targetFill, Time.deltaTime * updateSpeed);
             healthBarFill.fillAmount = currentFill;
+        }
+    }
+
+    private void InitOwningPlayer()
+    {
+        if(owningPlayer && owningController)
+            return;
+        
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var player in players)
+        {
+            if (player.GetComponent<NetworkObject>().IsLocalPlayer)
+            {
+                owningPlayer = player;
+                owningController = player.GetComponent<PlayerController>();
+                break;
+            }
         }
     }
 
