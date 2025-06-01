@@ -1,6 +1,7 @@
 using System;
 using Unity.Netcode;
 using UnityEngine;
+using Random = System.Random;
 
 public abstract class Enemy : NetworkBehaviour
 {
@@ -21,8 +22,7 @@ public abstract class Enemy : NetworkBehaviour
     [Tooltip("How much to reduce vertical recoil")] [Range(0f, 1f)]
     public float verticalRecoilMultiplier = 0.5f;
 
-    [Header("Health")] 
-    protected NetworkVariable<float> currentHealth = new NetworkVariable<float>(0,
+    [Header("Health")] protected NetworkVariable<float> currentHealth = new NetworkVariable<float>(0,
         NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     protected Rigidbody2D rb;
@@ -55,18 +55,39 @@ public abstract class Enemy : NetworkBehaviour
         }
     }
     
+    protected Transform FindNearestPlayer()
+    {
+        Transform nearestPlayer = null;
+        float minDistance = float.MaxValue;
+
+        PlayerController[] allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (var player in allPlayers)
+        {
+            float distance = Vector2.Distance(transform.position, player.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearestPlayer = player.transform;
+            }
+        }
+
+        return nearestPlayer;
+    }
+
     [ServerRpc(RequireOwnership = false)]
     public virtual void ApplyDamage_ServerRpc(int amount)
     {
         TakeDamage(amount);
     }
-    
+
+
+
     public virtual void TakeDamage(int amount)
     {
         if (HasAuthority)
         {
             Debug.Log($"Dealt {damage} damage to enemy");
-            
+
             currentHealth.Value -= amount;
             if (currentHealth.Value <= 0)
             {

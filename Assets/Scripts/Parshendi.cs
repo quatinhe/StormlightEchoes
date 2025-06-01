@@ -6,13 +6,15 @@ using Object = System.Object;
 
 public class Parshendi : Enemy
 {
-    [Header("Parshendi Settings")]
-    [Tooltip("How close the Parshendi needs to be to attack")]
+    [Header("Parshendi Settings")] [Tooltip("How close the Parshendi needs to be to attack")]
     public float attackRange = 2f;
+
     [Tooltip("How often the Parshendi can attack")]
     public float attackCooldown = 1.5f;
+
     [Tooltip("How far the Parshendi can see the player")]
     public float detectionRange = 7f;
+
     [Tooltip("Delay before dealing damage to match animation")]
     public float attackDelay = 0.2f;
 
@@ -22,13 +24,13 @@ public class Parshendi : Enemy
     private static readonly int IsWalking = Animator.StringToHash("IsWalking");
     private static readonly int AttackTrigger = Animator.StringToHash("Attack");
 
-    protected override void Start() 
+    protected override void Start()
     {
         base.Start();
-        
+
         attackTimer = attackCooldown;
         animator = GetComponent<Animator>();
-        
+
         if (animator == null)
         {
             Debug.LogError($"{gameObject.name} requires an Animator component!");
@@ -43,24 +45,7 @@ public class Parshendi : Enemy
 
     protected override void UpdateBehavior()
     {
-        /*if(!HasAuthority)
-            return;*/
-        
-        Transform nearestPlayer = null;
-        float minDistance = float.MaxValue;
-        
-        PlayerController[] allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-        foreach (var player in allPlayers)
-        {
-            float distance = Vector2.Distance(transform.position, player.transform.position);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                nearestPlayer = player.transform;
-            }
-        }
-        
-        playerTransform = nearestPlayer;
+        playerTransform = FindNearestPlayer();
         if (playerTransform == null) return;
 
         // Calculate distance to player
@@ -91,7 +76,7 @@ public class Parshendi : Enemy
             {
                 // Stop moving when in attack range
                 Move(Vector2.zero);
-                
+
                 // Attack if cooldown is ready
                 if (attackTimer <= 0)
                 {
@@ -117,6 +102,8 @@ public class Parshendi : Enemy
             attackTimer -= Time.deltaTime;
         }
     }
+
+   
 
     protected override void Attack()
     {
@@ -159,7 +146,7 @@ public class Parshendi : Enemy
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
-        
+
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
@@ -167,7 +154,7 @@ public class Parshendi : Enemy
     protected override void Die()
     {
         base.Die();
-        
+
         // Notify ProgressionManager of kill
         if (ProgressionManager.Instance != null)
         {
@@ -200,4 +187,4 @@ public class Parshendi : Enemy
             player.TakeDamage(damage);
         }
     }
-} 
+}

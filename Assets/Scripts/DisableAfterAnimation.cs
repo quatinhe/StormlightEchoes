@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class DestroyAfterAnimation : MonoBehaviour
+public class DisableAfterAnimation : MonoBehaviour
 {
     private Animator animator;
     private float animationLength;
@@ -38,10 +38,6 @@ public class DestroyAfterAnimation : MonoBehaviour
 
     private void DestroyObject()
     {
-        NetworkObject networkObject = GetComponent<NetworkObject>();
-        if (networkObject.HasAuthority)
-        {
-            networkObject.Despawn();
-        }
+        gameObject.SetActive(false);
     }
 } 

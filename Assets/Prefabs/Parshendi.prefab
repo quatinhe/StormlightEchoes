@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: -3309689457649242696}
   - component: {fileID: -6607497015571684920}
   - component: {fileID: -8169649734621270972}
+  - component: {fileID: -249506485746070881}
   m_Layer: 6
   m_Name: Parshendi
   m_TagString: Untagged
@@ -316,3 +317,15 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   TransitionStateInfoList: []
   m_Animator: {fileID: 1750611680100259814}
+--- !u!114 &-249506485746070881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7351344479486460783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83c1dfcf8c48403095af13055ad230db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

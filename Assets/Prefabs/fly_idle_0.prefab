@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: -2015453563942998913}
   - component: {fileID: 5541233703119407203}
   - component: {fileID: 2572329319763097138}
+  - component: {fileID: -6954713357607175569}
   m_Layer: 6
   m_Name: fly_idle_0
   m_TagString: Untagged
@@ -333,3 +334,15 @@ MonoBehaviour:
     TriggerNameHash: 1388814594
     TransitionIndex: 1
   m_Animator: {fileID: 3292467185665525122}
+--- !u!114 &-6954713357607175569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7379949568755140259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83c1dfcf8c48403095af13055ad230db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

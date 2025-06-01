@@ -94,10 +94,9 @@ public class Parshendi_Fly : Enemy
 
     protected override void UpdateBehavior()
     {
-        if(!HasAuthority)
+        playerTransform = FindNearestPlayer();
+        if (playerTransform == null) 
             return;
-        
-        if (playerTransform == null) return;
 
         // Calculate distance to player
         float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
