@@ -863,8 +863,11 @@ public class PlayerController : NetworkBehaviour
         enabled = false;
 
         // You might want to trigger game over or respawn logic here
-        // For now, we'll just destroy the player
-        Destroy(gameObject);
+        // For now, we'll just despawn the player
+        if (HasAuthority)
+        {
+            GetComponent<NetworkObject>().Despawn();
+        }
     }
 
     public override void OnDestroy()
@@ -1007,7 +1010,7 @@ public class PlayerController : NetworkBehaviour
         Vector3 spawnPosition = upSpellSpawnPoint.position;
         Debug.Log($"Up spell spawn point position: {spawnPosition}");
 
-        GameObject spell = Instantiate(upSpell, spawnPosition, Quaternion.Euler(0, 0, 90));
+        GameObject spell = Instantiate(upSpell, spawnPosition, Quaternion.Euler(0, 0, 0));
         spell.GetComponent<NetworkObject>().Spawn();
 
         if (spell == null)

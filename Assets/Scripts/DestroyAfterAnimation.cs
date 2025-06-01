@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class DisableAfterAnimation : MonoBehaviour
@@ -37,6 +38,10 @@ public class DisableAfterAnimation : MonoBehaviour
 
     private void DisableObject()
     {
-        gameObject.SetActive(false);
+        NetworkObject networkObject = GetComponent<NetworkObject>();
+        if (networkObject.HasAuthority)
+        {
+            networkObject.Despawn();
+        }
     }
 } 

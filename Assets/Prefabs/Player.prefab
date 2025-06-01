@@ -185,7 +185,7 @@ Transform:
   m_GameObject: {fileID: 1735622857376237535}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -474,7 +474,8 @@ MonoBehaviour:
   jumpCutMultiplier: 0.5
   jumpBufferTime: 0.2
   coyoteTime: 0.2
-  canDoubleJump: 1
+  canDoubleJump:
+    m_InternalValue: 0
   canDash: 1
   dashSpeed: 50
   dashTime: 0.3
@@ -493,6 +494,8 @@ MonoBehaviour:
   slashEffect: {fileID: 1803071489183328904, guid: e98389747f93101488a233e827f44930, type: 3}
   slashEffectDuration: 0.2
   canCast: 1
+  canCastSideSpell:
+    m_InternalValue: 0
   timeBetweenCast: 0.5
   manaSpellCost: 0
   sideSpell: {fileID: 1050300731267238909, guid: 2e38b1d59bef79740bcdd4a7abd0840a, type: 3}
