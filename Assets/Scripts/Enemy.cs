@@ -33,7 +33,8 @@ public abstract class Enemy : NetworkBehaviour
 
     private void Awake()
     {
-        if (HasAuthority)
+        // Initialize health for the server/owner
+        if (IsServer || HasAuthority)
         {
             currentHealth.Value = maxHealth;
         }
@@ -52,6 +53,13 @@ public abstract class Enemy : NetworkBehaviour
         if (spriteRenderer == null)
         {
             Debug.LogError($"{gameObject.name} requires a SpriteRenderer component!");
+        }
+        
+        // Ensure health is properly initialized
+        if (currentHealth.Value <= 0 && (IsServer || HasAuthority))
+        {
+            currentHealth.Value = maxHealth;
+            Debug.Log($"[{gameObject.name}] Health initialized to {maxHealth}");
         }
     }
     
@@ -80,23 +88,41 @@ public abstract class Enemy : NetworkBehaviour
         TakeDamage(amount);
     }
 
-
-
     public virtual void TakeDamage(int amount)
     {
-        if (HasAuthority)
+        if (HasAuthority || IsServer)
         {
-            Debug.Log($"Dealt {damage} damage to enemy");
+            Debug.Log($"[{gameObject.name}] Taking {amount} damage. Health before: {currentHealth.Value}/{maxHealth}");
 
+            // Prevent negative damage or excessive damage
+            if (amount <= 0)
+            {
+                Debug.LogWarning($"[{gameObject.name}] Invalid damage amount: {amount}");
+                return;
+            }
+
+            float healthBefore = currentHealth.Value;
             currentHealth.Value -= amount;
+            
+            Debug.Log($"[{gameObject.name}] Health after damage: {currentHealth.Value}/{maxHealth}");
+            
             if (currentHealth.Value <= 0)
             {
+                Debug.Log($"[{gameObject.name}] Enemy died from damage");
                 Die();
             }
             else
             {
-                // Apply recoil
-                ApplyRecoil();
+                // Apply recoil with error handling
+                try
+                {
+                    ApplyRecoil();
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[{gameObject.name}] Error applying recoil: {e.Message}");
+                    // Continue without recoil if there's an error
+                }
             }
         }
     }
@@ -105,19 +131,50 @@ public abstract class Enemy : NetworkBehaviour
     {
         if (rb != null)
         {
-            // Get the direction from the player to the enemy
-            Vector2 playerPosition = PlayerController.Instace.transform.position;
-            Vector2 direction = (transform.position - (Vector3)playerPosition).normalized;
+            Vector2 playerPosition = Vector2.zero;
+            bool foundPlayer = false;
+            
+            // Try to get player position from the static instance first
+            if (PlayerController.Instace != null && PlayerController.Instace.transform != null)
+            {
+                playerPosition = PlayerController.Instace.transform.position;
+                foundPlayer = true;
+            }
+            else
+            {
+                // Fallback: Find the nearest player
+                Transform nearestPlayer = FindNearestPlayer();
+                if (nearestPlayer != null)
+                {
+                    playerPosition = nearestPlayer.position;
+                    foundPlayer = true;
+                }
+            }
+            
+            if (foundPlayer)
+            {
+                // Get the direction from the player to the enemy
+                Vector2 direction = (transform.position - (Vector3)playerPosition).normalized;
 
-            // Apply more horizontal recoil than vertical
-            direction.y *= verticalRecoilMultiplier;
+                // Apply more horizontal recoil than vertical
+                direction.y *= verticalRecoilMultiplier;
 
-            // Apply the recoil force
-            rb.linearVelocity = direction * recoilForce;
+                // Apply the recoil force
+                rb.linearVelocity = direction * recoilForce;
 
-            // Start recoil state
-            isRecoiling = true;
-            recoilTimeLeft = recoilDuration;
+                // Start recoil state
+                isRecoiling = true;
+                recoilTimeLeft = recoilDuration;
+            }
+            else
+            {
+                Debug.LogWarning($"[{gameObject.name}] Could not find player for recoil calculation, applying default recoil");
+                // Apply default recoil in a random direction
+                Vector2 randomDirection = new Vector2(UnityEngine.Random.Range(-1f, 1f), 0.5f).normalized;
+                rb.linearVelocity = randomDirection * recoilForce;
+                isRecoiling = true;
+                recoilTimeLeft = recoilDuration;
+            }
         }
     }
 

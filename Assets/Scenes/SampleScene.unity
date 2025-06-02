@@ -5794,7 +5794,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  parshendiKillsRequired: 1
+  parshendiKillsRequired: 7
   unlockMessagePanel: {fileID: 901951206}
   unlockMessageText: {fileID: 499066785}
   messageDisplayTime: 4

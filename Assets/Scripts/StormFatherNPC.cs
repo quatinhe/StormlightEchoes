@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
 using System.Linq;
+using System.Collections;
 
 public class StormFatherNPC : MonoBehaviour
 {
@@ -104,8 +105,9 @@ public class StormFatherNPC : MonoBehaviour
                 }
                 else
                 {
-                    if (closeDialogueButton != null)
-                        closeDialogueButton.gameObject.SetActive(true);
+                    // After 3 questions, Storm Father kills the player
+                    KillPlayer();
+                    return;
                 }
                 return;
             }
@@ -275,5 +277,46 @@ public class StormFatherNPC : MonoBehaviour
             screenPos.y = Screen.height - screenPos.y;
             GUI.Label(new Rect(screenPos.x - 50, screenPos.y - 50, 200, 20), interactionPrompt);
         }
+    }
+
+    private void KillPlayer()
+    {
+        if (dialogueText != null)
+            dialogueText.text = "Your time has come, child of Honor. The Storm Father's judgment is final.";
+        
+        // Wait a moment for the player to read the message, then kill them
+        StartCoroutine(KillPlayerAfterDelay(2f));
+    }
+
+    private System.Collections.IEnumerator KillPlayerAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        if (playerController != null && playerController.IsOwner)
+        {
+            Debug.Log("[StormFatherNPC] Storm Father is killing the player - loading MainMenu directly");
+            
+            // Disable player movement and controls immediately
+            playerController.movementLocked.Value = true;
+            var rb = playerController.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.gravityScale = 0f;
+                rb.constraints = RigidbodyConstraints2D.FreezeAll;
+            }
+            
+            // Disable player components
+            playerController.enabled = false;
+            var collider = playerController.GetComponent<Collider2D>();
+            if (collider != null)
+                collider.enabled = false;
+            
+            // Load main menu directly without DeathManager fade effects
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        }
+        
+        // Close the dialogue
+        CloseDialogue();
     }
 } 

@@ -229,9 +229,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 100
-  moveSpeed: 5
-  damage: 1
+  maxHealth: 3
+  moveSpeed: 10
+  damage: 2
   recoilForce: 5
   recoilDuration: 0.2
   verticalRecoilMultiplier: 0.5

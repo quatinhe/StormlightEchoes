@@ -116,6 +116,15 @@ public class MainMenu : MonoBehaviour
 
     public void StartNewGame()
     {
+        // Check if NetworkManager is available
+        if (NetworkManager.Singleton == null)
+        {
+            Debug.LogWarning("[MainMenu] NetworkManager.Singleton is null, loading scene directly without networking");
+            // Load scene directly without networking
+            SceneManager.LoadScene(gameSceneName);
+            return;
+        }
+
         if (NetworkManager.Singleton.IsHost)
         {
             Debug.Log("[MainMenu] Host loading new game scene");
@@ -138,9 +147,14 @@ public class MainMenu : MonoBehaviour
     private IEnumerator LoadSceneAfterHostStart()
     {
         yield return new WaitForEndOfFrame();
-        if (NetworkManager.Singleton.IsHost)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
         {
             NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
+        }
+        else
+        {
+            Debug.LogWarning("[MainMenu] NetworkManager became null or failed to start host, loading scene directly");
+            SceneManager.LoadScene(gameSceneName);
         }
     }
 
@@ -148,6 +162,13 @@ public class MainMenu : MonoBehaviour
     private void RequestNewGameServerRpc()
     {
         Debug.Log("[MainMenu] Server received new game request");
-        NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
+        }
+        else
+        {
+            Debug.LogError("[MainMenu] NetworkManager.Singleton is null in RequestNewGameServerRpc");
+        }
     }
 } 

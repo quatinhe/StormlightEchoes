@@ -207,6 +207,7 @@ public class PlayerController : NetworkBehaviour
     private bool isTimeSlowed;
 
     private bool wantHeal = false;
+    private bool spellHeal = false; // New flag for spell-triggered healing
 
     private NetworkVariable<bool> isHealing = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Owner);
@@ -512,6 +513,12 @@ public class PlayerController : NetworkBehaviour
         wantHeal = false;
     }
 
+    public void StartSpellHeal()
+    {
+        spellHeal = true;
+        wantHeal = true;
+    }
+
     private void HandleHeal()
     {
         if (!IsOwner)
@@ -526,9 +533,21 @@ public class PlayerController : NetworkBehaviour
         // Healing logic (Hollow Knight style: must hold for healTime, only heal once per hold)
         bool healButtonHeld = Input.GetMouseButton(1);
 
-        if (!isHealing.Value && currentHealth.Value < maxHealth && IsIdle() && healButtonHeld &&
-            !healButtonHeldLastFrame &&
-            currentMana.Value > 0f)
+        // For spell healing, we don't require button input
+        bool canStartHealing = false;
+        if (spellHeal)
+        {
+            // Spell healing - can start immediately if conditions are met
+            canStartHealing = !isHealing.Value && currentHealth.Value < maxHealth && IsIdle() && currentMana.Value > 0f;
+        }
+        else
+        {
+            // Regular healing - requires button hold
+            canStartHealing = !isHealing.Value && currentHealth.Value < maxHealth && IsIdle() && healButtonHeld &&
+                !healButtonHeldLastFrame && currentMana.Value > 0f;
+        }
+
+        if (canStartHealing)
         {
             // Start healing charge
             isHealing.Value = true;
@@ -541,6 +560,7 @@ public class PlayerController : NetworkBehaviour
             if (!IsIdle() || isDashing.Value || isRecoiling || isAttacking || isInvulnerable || currentMana.Value <= 0f)
             {
                 isHealing.Value = false;
+                spellHeal = false; // Reset spell heal flag
             }
             else
             {
@@ -551,6 +571,9 @@ public class PlayerController : NetworkBehaviour
                 {
                     Heal(healAmount);
                     isHealing.Value = false;
+                    spellHeal = false; // Reset spell heal flag
+                    wantHeal = false; // Allow future healing
+                    Debug.Log("[PlayerController] Healing completed, ready for next heal");
                 }
             }
         }
@@ -687,6 +710,7 @@ public class PlayerController : NetworkBehaviour
             Enemy enemy = objectsToHit[i].GetComponent<Enemy>();
             if (enemy != null)
             {
+                Debug.Log($"[PlayerController] Dealing {attackDamage} damage to {enemy.gameObject.name}");
                 enemy.ApplyDamage_ServerRpc(attackDamage);
 
                 didHitEnemy = true;
@@ -1053,11 +1077,26 @@ public class PlayerController : NetworkBehaviour
                 // Deduct mana cost
                 currentMana.Value = Mathf.Clamp(currentMana.Value - manaSpellCost, 0, maxMana);
                 
-                // Down spell (activate child GameObject)
+                // Down spell (heal spell) - integrate with healing system
                 if (downSpell != null)
                 {
                     downSpell.SetActive(false); // Reset if needed
                     downSpell.SetActive(true); // Activate effect
+                }
+                
+                // Start the healing process if player can heal
+                if (currentHealth.Value < maxHealth && IsIdle())
+                {
+                    StartSpellHeal();
+                    Debug.Log("[PlayerController] Down spell cast - starting heal process");
+                }
+                else if (currentHealth.Value >= maxHealth)
+                {
+                    Debug.Log("[PlayerController] Player already at full health, heal spell has no effect");
+                }
+                else if (!IsIdle())
+                {
+                    Debug.Log("[PlayerController] Player not idle, heal spell cannot be used while moving/attacking");
                 }
             }
 
