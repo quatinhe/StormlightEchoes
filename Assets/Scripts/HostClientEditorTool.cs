@@ -16,6 +16,14 @@ public class HostClientEditorTool : MonoBehaviour
         if (!isVirtualClone)
         {
             Debug.Log("Main Editor Instance: Starting as Host");
+            
+            // Check if NetworkManager is already running
+            if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)
+            {
+                Debug.Log("[HostClientEditorTool] NetworkManager already running, skipping host start");
+                return;
+            }
+            
             NetworkManager.Singleton.StartHost();
         }
         else

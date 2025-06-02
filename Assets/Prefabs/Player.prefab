@@ -516,7 +516,7 @@ MonoBehaviour:
     m_Bits: 8
   groundCheckDistance: 0.1
   attackDamage: 1
-  maxHealth: 5
+  maxHealth: 1
   invulnerabilityDuration: 1
   damageFlashCount: 3
   damageFlashDuration: 0.1
@@ -531,6 +531,8 @@ MonoBehaviour:
   manaDrainSpeed: 20
   manaGain: 10
   maxMana: 100
+  movementLocked:
+    m_InternalValue: 0
 --- !u!95 &1064256711634345562
 Animator:
   serializedVersion: 7

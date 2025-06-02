@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using Unity.Netcode;
+using TMPro;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Animator))]
 public class PlayerController : NetworkBehaviour
@@ -308,7 +309,7 @@ public class PlayerController : NetworkBehaviour
         {
             return;
         }
-        Debug.Log($"[PlayerController] IsOwner: {IsOwner}, movementLocked: {movementLocked.Value}");
+        //Debug.Log($"[PlayerController] IsOwner: {IsOwner}, movementLocked: {movementLocked.Value}");
 
         // Lock movement if movementLocked is true
         if (movementLocked.Value)
@@ -319,7 +320,7 @@ public class PlayerController : NetworkBehaviour
                 rb.linearVelocity = Vector2.zero;
                 rb.constraints = RigidbodyConstraints2D.FreezeAll;
             }
-            Debug.Log("[PlayerController] Movement is locked and Rigidbody is frozen!");
+            //Debug.Log("[PlayerController] Movement is locked and Rigidbody is frozen!");
             return;
         }
         else if (rb != null && rb.constraints != originalConstraints)
@@ -875,17 +876,33 @@ public class PlayerController : NetworkBehaviour
 
     private void Die()
     {
-        animator.SetTrigger("Die");
-        enabled = false;
+        if (!IsOwner) return;
 
-        Debug.Log("Player died!");
-
-        // You might want to trigger game over or respawn logic here
-        // For now, we'll just despawn the player with delay
-        if (HasAuthority)
+        Debug.Log("[PlayerController] Player died");
+        
+        // Trigger death sequence
+        if (DeathManager.Instance != null)
         {
-            StartCoroutine(DestroyPlayer(1f * Time.timeScale));
+            DeathManager.Instance.StartDeathSequence();
         }
+        else
+        {
+            Debug.LogError("[PlayerController] DeathManager instance not found!");
+        }
+
+        // Disable player movement and controls
+        movementLocked.Value = true;
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = 0f;
+        rb.constraints = RigidbodyConstraints2D.FreezeAll;
+        
+        // Disable all player input and components
+        enabled = false;
+        GetComponent<Collider2D>().enabled = false;
+        
+        // Disable any other components that might allow movement
+        if (GetComponent<Animator>() != null)
+            GetComponent<Animator>().enabled = false;
     }
     
     IEnumerator DestroyPlayer(float delay)
@@ -1044,12 +1061,61 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (IsLocalPlayer)
+        if (IsOwner)
         {
+            Debug.Log($"[PlayerController] OnNetworkSpawn starting for OwnerClientId: {OwnerClientId}");
+            
+            // Set correct spawn position after scene reload
+            var spawnManager = FindFirstObjectByType<PlayerSpawnManager>();
+            if (spawnManager != null && spawnManager.spawnPositions.Count > 0)
+            {
+                int index = (int)OwnerClientId % spawnManager.spawnPositions.Count;
+                transform.position = spawnManager.spawnPositions[index].position;
+                Debug.Log($"[PlayerController] Set position to: {transform.position} using spawn index: {index}");
+            }
+            else
+            {
+                Debug.LogError("[PlayerController] No spawn manager or spawn positions found!");
+            }
+            
+            // Reset health and movement
+            currentHealth.Value = maxHealth;
+            movementLocked.Value = false;
+            rb.gravityScale = gravityScale;
+            rb.constraints = originalConstraints;
+            rb.linearVelocity = Vector2.zero;
+            enabled = true;
+            
+            // Ensure all components are enabled
+            var col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = true;
+            var anim = GetComponent<Animator>();
+            if (anim != null) anim.enabled = true;
+            
+            // Ensure SpriteRenderer is enabled and visible
+            if (sr != null)
+            {
+                sr.enabled = true;
+                sr.color = Color.white; // Reset color to white
+                Debug.Log($"[PlayerController] SpriteRenderer enabled: {sr.enabled}, sprite: {sr.sprite?.name}");
+            }
+            else
+            {
+                Debug.LogError("[PlayerController] SpriteRenderer is null!");
+            }
+            
+            // Camera follow
             if (Camera.main != null)
             {
-                Camera.main.GetComponent<CameraFollow>().target = transform;
+                var camFollow = Camera.main.GetComponent<CameraFollow>();
+                if (camFollow != null)
+                {
+                    camFollow.target = transform;
+                    Debug.Log("[PlayerController] Camera set to follow player");
+                }
             }
+            
+            Debug.Log($"[PlayerController] OnNetworkSpawn complete - Health: {currentHealth.Value}, MovementLocked: {movementLocked.Value}, Position: {transform.position}");
         }
     }
 
