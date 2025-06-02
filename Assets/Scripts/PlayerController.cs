@@ -221,6 +221,15 @@ public class PlayerController : NetworkBehaviour
 
     public NetworkVariable<bool> movementLocked = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource walkAudioSource;
+    [SerializeField] private AudioClip walkClip;
+    [SerializeField] private float walkVolume = 0.7f;
+    [SerializeField] private AudioSource sfxAudioSource;
+    [SerializeField] private AudioClip attackClip;
+    [SerializeField] private AudioClip jumpClip;
+    [SerializeField] private float sfxVolume = 1.0f;
+
     public void AddMovementInput(Vector2 input)
     {
         moveInput.Value = input.x;
@@ -229,6 +238,11 @@ public class PlayerController : NetworkBehaviour
     public void SetWantJump(bool newWantJump)
     {
         wantJump = newWantJump;
+        // Play jump sound
+        if (wantJump && isGrounded && sfxAudioSource != null && jumpClip != null)
+        {
+            sfxAudioSource.PlayOneShot(jumpClip, sfxVolume);
+        }
     }
 
     public void SetWantStopJump(bool newWantStopJump)
@@ -436,6 +450,25 @@ public class PlayerController : NetworkBehaviour
         }
 
         HandleHeal();
+        bool isWalking = Mathf.Abs(moveInput.Value) > 0.1f && isGrounded && !movementLocked.Value;
+        // Walking sound logic
+        if (isWalking)
+        {
+            if (walkAudioSource != null && walkClip != null && !walkAudioSource.isPlaying)
+            {
+                walkAudioSource.clip = walkClip;
+                walkAudioSource.volume = walkVolume;
+                walkAudioSource.loop = true;
+                walkAudioSource.Play();
+            }
+        }
+        else
+        {
+            if (walkAudioSource != null && walkAudioSource.isPlaying)
+            {
+                walkAudioSource.Stop();
+            }
+        }
     }
 
     public void StartHeal()
@@ -682,6 +715,12 @@ public class PlayerController : NetworkBehaviour
     {
         isAttacking = true;
         timeSinceAttack = timeBetweenAttack;
+
+        // Play attack sound
+        if (sfxAudioSource != null && attackClip != null)
+        {
+            sfxAudioSource.PlayOneShot(attackClip, sfxVolume);
+        }
 
         // Y-axis directional input
         float verticalInput = Input.GetAxisRaw("Vertical");

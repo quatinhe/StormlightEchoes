@@ -13,8 +13,12 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private Image backgroundImage;
     [SerializeField] private TextMeshProUGUI titleText;
 
+    [Header("Menu Music")]
+    [SerializeField] private AudioSource menuMusic;
+    [SerializeField] private float musicFadeDuration = 1.5f;
+
     [Header("Menu Settings")]
-    [SerializeField] private string gameSceneName = "SampleScene"; 
+    [SerializeField] private string gameSceneName = "SampleScene";
     [SerializeField] private float buttonHoverScale = 1.1f;
     [SerializeField] private float buttonTransitionSpeed = 10f;
 
@@ -48,11 +52,39 @@ public class MainMenu : MonoBehaviour
         {
             Debug.LogError("Background image not assigned in MainMenu!");
         }
+
+        // Play menu music if assigned
+        if (menuMusic != null && !menuMusic.isPlaying)
+        {
+            menuMusic.Play();
+        }
     }
 
     private void StartGame()
     {
-        // Load the first level
+        // Fade out music, then start new game
+        if (menuMusic != null && menuMusic.isPlaying)
+        {
+            StartCoroutine(FadeOutMusicAndStartGame());
+        }
+        else
+        {
+            StartNewGame();
+        }
+    }
+
+    private IEnumerator FadeOutMusicAndStartGame()
+    {
+        float startVolume = menuMusic.volume;
+        float elapsed = 0f;
+        while (elapsed < musicFadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            menuMusic.volume = Mathf.Lerp(startVolume, 0f, elapsed / musicFadeDuration);
+            yield return null;
+        }
+        menuMusic.Stop();
+        menuMusic.volume = startVolume; // Reset for next time
         StartNewGame();
     }
 
@@ -87,7 +119,7 @@ public class MainMenu : MonoBehaviour
         if (NetworkManager.Singleton.IsHost)
         {
             Debug.Log("[MainMenu] Host loading new game scene");
-            NetworkManager.Singleton.SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
+            NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
         }
         else if (NetworkManager.Singleton.IsClient)
         {
@@ -103,12 +135,12 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-    private System.Collections.IEnumerator LoadSceneAfterHostStart()
+    private IEnumerator LoadSceneAfterHostStart()
     {
         yield return new WaitForEndOfFrame();
         if (NetworkManager.Singleton.IsHost)
         {
-            NetworkManager.Singleton.SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
+            NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
         }
     }
 
@@ -116,6 +148,6 @@ public class MainMenu : MonoBehaviour
     private void RequestNewGameServerRpc()
     {
         Debug.Log("[MainMenu] Server received new game request");
-        NetworkManager.Singleton.SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
+        NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
     }
 } 
