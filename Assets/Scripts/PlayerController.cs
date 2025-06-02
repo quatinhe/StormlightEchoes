@@ -230,6 +230,19 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private AudioClip jumpClip;
     [SerializeField] private float sfxVolume = 1.0f;
 
+    [Header("Cheat Mode")]
+    [Tooltip("Enable cheat mode for teleportation")]
+    public bool cheatModeEnabled = false;
+    
+    [Tooltip("First respawn position (Key 1)")]
+    public Vector3 respawnPosition1 = new Vector3(0f, 0f, 0f);
+    
+    [Tooltip("Second respawn position (Key 2)")]
+    public Vector3 respawnPosition2 = new Vector3(10f, 0f, 0f);
+    
+    [Tooltip("Third respawn position (Key 3)")]
+    public Vector3 respawnPosition3 = new Vector3(20f, 0f, 0f);
+
     public void AddMovementInput(Vector2 input)
     {
         moveInput.Value = input.x;
@@ -345,6 +358,23 @@ public class PlayerController : NetworkBehaviour
         // --- HANDLE HORIZONTAL MOVEMENT INPUT HERE ---
         float horizontal = Input.GetAxisRaw("Horizontal"); // Handles A/D, Left/Right, and controller
         moveInput.Value = horizontal;
+
+        // --- HANDLE CHEAT MODE INPUT ---
+        if (cheatModeEnabled)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                TeleportToPosition(respawnPosition1);
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                TeleportToPosition(respawnPosition2);
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha3))
+            {
+                TeleportToPosition(respawnPosition3);
+            }
+        }
 
         // Handle time slow
         if (isTimeSlowed)
@@ -1230,5 +1260,33 @@ public class PlayerController : NetworkBehaviour
     {
         if (!IsServer) return;
         canDash = true;
+    }
+
+    private void TeleportToPosition(Vector3 position)
+    {
+        if (!IsOwner) return;
+
+        Debug.Log($"[PlayerController] Teleporting to position: {position}");
+        
+        // Call ServerRpc to ensure position is synchronized across all clients
+        if (IsServer)
+        {
+            // If we're the server, directly set the position
+            transform.position = position;
+            rb.linearVelocity = Vector2.zero; // Reset velocity
+        }
+        else
+        {
+            // If we're a client, request teleport from server
+            TeleportToPosition_ServerRpc(position);
+        }
+    }
+
+    [ServerRpc]
+    private void TeleportToPosition_ServerRpc(Vector3 position)
+    {
+        transform.position = position;
+        rb.linearVelocity = Vector2.zero; // Reset velocity
+        Debug.Log($"[PlayerController] Server teleported player to: {position}");
     }
 }
