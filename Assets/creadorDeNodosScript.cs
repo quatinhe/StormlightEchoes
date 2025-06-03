@@ -3,7 +3,6 @@ using UnityEngine;
 using System.Linq;//para ordenar las plataformas por la posicion  y
 
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using Unity.VisualScripting;
 using UnityEngine.UIElements;
 using System.Xml.Schema;
@@ -182,7 +181,7 @@ public class creadorDeNodosScript : MonoBehaviour
                     {
 
 
-                        // Guardar el salto con dirección (velX) si querés
+                        // Guardar el salto con direcciï¿½n (velX) si querï¿½s
                         AgregarElemento(i, new CuatroEnteros(l, 1, resultado.velX, resultado.tiempo));
                         Debug.Log("salto es posible ");
                     }
@@ -453,7 +452,7 @@ public class creadorDeNodosScript : MonoBehaviour
             Vector2 puntoImpacto = hit.point;
             Transform plataforma = hit.collider.transform;
 
-            // Ajustamos un poco la altura para que no esté "pegado" al collider
+            // Ajustamos un poco la altura para que no estï¿½ "pegado" al collider
             Vector3 posicionNodo = new Vector3(puntoImpacto.x, puntoImpacto.y, nodoOrigen.transform.position.z);
 
 
@@ -721,7 +720,7 @@ private void imprimirCamino(int inicial, int fianl)
         // velocidad vertical inicial de salto
         float v0y = velocityJump;
 
-        // Resolver la ecuación: y1 = y0 + v0y*t - 0.5*g*t^2
+        // Resolver la ecuaciï¿½n: y1 = y0 + v0y*t - 0.5*g*t^2
         // => 0.5*g*t^2 - v0y*t + dy = 0
         float a = 0.5f * g;
         float b = -v0y;
@@ -731,7 +730,7 @@ private void imprimirCamino(int inicial, int fianl)
 
         if (discriminante < 0)
         {
-            // No hay solución real: el salto no llega a esa altura
+            // No hay soluciï¿½n real: el salto no llega a esa altura
             return (false, 0f, 0f);
         }
 
@@ -740,13 +739,13 @@ private void imprimirCamino(int inicial, int fianl)
         float t1 = (-b - sqrtDiscriminante) / (2 * a);
         float t2 = (-b + sqrtDiscriminante) / (2 * a);
 
-        // Elegimos la t que representa cuando el personaje ya está cayendo (v < 0)
+        // Elegimos la t que representa cuando el personaje ya estï¿½ cayendo (v < 0)
         float t = Mathf.Max(t1, t2);
         if (t < 0) return (false, 0f, 0f);
 
-        // Verificamos que esté cayendo en ese momento (velocidad vertical < 0)
+        // Verificamos que estï¿½ cayendo en ese momento (velocidad vertical < 0)
         float velY = v0y - g * t;
-        if (velY > 0) return (false, 0f, 0f); // aún está subiendo
+        if (velY > 0) return (false, 0f, 0f); // aï¿½n estï¿½ subiendo
 
         // Calcular velocidad horizontal necesaria
         float dx = destino.x - origen.x;
@@ -780,7 +779,7 @@ private void imprimirCamino(int inicial, int fianl)
         Vector2 dir2 = (destinoAjustado - maxHeightAjustado).normalized;
         float dist2 = Vector2.Distance(maxHeightAjustado, destinoAjustado);
 
-        // RaycastAll desde origen a punto más alto
+        // RaycastAll desde origen a punto mï¿½s alto
         RaycastHit2D[] hits1 = Physics2D.RaycastAll(origenAjustado, dir1, dist1);
         RaycastHit2D[] hits2 = Physics2D.RaycastAll(maxHeightAjustado, dir2, dist2);
 
@@ -789,7 +788,7 @@ private void imprimirCamino(int inicial, int fianl)
     }
 
 
-    // Función auxiliar para detectar si hay obstáculos válidos
+    // Funciï¿½n auxiliar para detectar si hay obstï¿½culos vï¿½lidos
     bool HayObstaculo(RaycastHit2D[] hits, Vector2 origen, Vector2 destino)
     {
         foreach (var hit in hits)

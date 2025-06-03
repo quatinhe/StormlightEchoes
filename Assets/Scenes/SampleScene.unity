@@ -8478,6 +8478,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cda1e0ed14794403a67ccbd8bf125313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  auto: 0
+  client: 1
+  serverUrl: 127.0.0.1
+  serverPort: 7777
 --- !u!114 &900364544
 MonoBehaviour:
   m_ObjectHideFlags: 0
