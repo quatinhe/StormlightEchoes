@@ -863,7 +863,7 @@ Transform:
   m_GameObject: {fileID: 78994389}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 129.6, y: 38.6, z: -0.067150764}
+  m_LocalPosition: {x: 21.13, y: 16.86, z: -0.067150764}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8478,8 +8478,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cda1e0ed14794403a67ccbd8bf125313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  auto: 0
-  client: 1
+  auto: 1
+  client: 0
   serverUrl: 127.0.0.1
   serverPort: 7777
 --- !u!114 &900364544
