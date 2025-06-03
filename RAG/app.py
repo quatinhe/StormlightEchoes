@@ -11,10 +11,10 @@ if not openai.api_key:
 app = FastAPI(title="Father Storm Q&A API")
 
 class AskRequest(BaseModel):
-    question: str  # The player’s question
+    question: str  
 
 class AskResponse(BaseModel):
-    answer: str  # Father Storm’s reply
+    answer: str  
 
 @app.post("/ask", response_model=AskResponse)
 async def ask(request: AskRequest):
