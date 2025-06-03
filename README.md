@@ -70,16 +70,17 @@ A multiplayer action game set in the world of Roshar, inspired by the Stormlight
 
 ### Movement
 - A/D or Left/Right Arrow: Move horizontally
-- Space: Jump
-- Double tap Space: Double jump (when unlocked)
+- Space: W
+- Double tap W: Double jump (when unlocked)
 - Shift: Dash (when unlocked)
+- Space - Cast spell
 
 ### Combat
 - Left Click: Attack
 - Right Click (hold): Heal
-- Q: Cast side spell
-- W: Cast up spell
-- S: Cast down spell
+- Space sideways: Cast side spell
+- Space upwards: Cast up spell
+- Space downwards: Cast down spell
 
 ## Development Notes
 
