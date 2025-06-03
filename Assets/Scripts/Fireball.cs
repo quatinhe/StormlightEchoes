@@ -13,7 +13,7 @@ public class Fireball : NetworkBehaviour
 
     NetworkObject networkObject;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    
     void Start()
     {
         Debug.Log("Fireball Start called");
@@ -26,17 +26,17 @@ public class Fireball : NetworkBehaviour
 
         networkObject = GetComponent<NetworkObject>();
 
-        // Set initial velocity based on the fireball's rotation
+        
         float angle = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
         direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
         rb.linearVelocity = direction * speed;
         Debug.Log($"Fireball velocity set to: {rb.linearVelocity}");
     }
 
-    // Update is called once per frame
+    
     void Update()
     {
-        // Add debug visualization
+        
         Debug.DrawRay(transform.position, direction * 0.5f, Color.red);
 
         UpdateLifetime();
@@ -61,10 +61,10 @@ public class Fireball : NetworkBehaviour
         Enemy enemy = other.GetComponent<Enemy>();
         if (enemy)
         {
-            // Deal damage to the enemy
+            
             enemy.TakeDamage(Mathf.RoundToInt(damage));
 
-            // Apply knockback force
+            
             enemy.AddForce(direction * hitForce);
 
             if (HasAuthority)

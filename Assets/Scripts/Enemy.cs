@@ -134,7 +134,7 @@ public abstract class Enemy : NetworkBehaviour
             Vector2 playerPosition = Vector2.zero;
             bool foundPlayer = false;
             
-            // Try to get player position from the static instance first
+            // get player position from the static instance first
             if (PlayerController.Instace != null && PlayerController.Instace.transform != null)
             {
                 playerPosition = PlayerController.Instace.transform.position;
@@ -142,7 +142,7 @@ public abstract class Enemy : NetworkBehaviour
             }
             else
             {
-                // Fallback: Find the nearest player
+                // Ou find the nearest player
                 Transform nearestPlayer = FindNearestPlayer();
                 if (nearestPlayer != null)
                 {
@@ -153,23 +153,23 @@ public abstract class Enemy : NetworkBehaviour
             
             if (foundPlayer)
             {
-                // Get the direction from the player to the enemy
+                
                 Vector2 direction = (transform.position - (Vector3)playerPosition).normalized;
 
-                // Apply more horizontal recoil than vertical
+                
                 direction.y *= verticalRecoilMultiplier;
 
-                // Apply the recoil force
+                
                 rb.linearVelocity = direction * recoilForce;
 
-                // Start recoil state
+                
                 isRecoiling = true;
                 recoilTimeLeft = recoilDuration;
             }
             else
             {
                 Debug.LogWarning($"[{gameObject.name}] Could not find player for recoil calculation, applying default recoil");
-                // Apply default recoil in a random direction
+                
                 Vector2 randomDirection = new Vector2(UnityEngine.Random.Range(-1f, 1f), 0.5f).normalized;
                 rb.linearVelocity = randomDirection * recoilForce;
                 isRecoiling = true;
@@ -186,7 +186,7 @@ public abstract class Enemy : NetworkBehaviour
             if (recoilTimeLeft <= 0)
             {
                 isRecoiling = false;
-                // Reset velocity when recoil ends
+                
                 if (rb != null)
                 {
                     rb.linearVelocity = Vector2.zero;
@@ -232,7 +232,7 @@ public abstract class Enemy : NetworkBehaviour
         }
     }
 
-    // Abstract methods that derived classes must implement
+    
     protected abstract void Attack();
     protected abstract void UpdateBehavior();
 }

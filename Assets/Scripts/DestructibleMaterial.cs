@@ -7,11 +7,11 @@ public class DestructibleMaterial : NetworkBehaviour
     {
         if (!IsServer) return;
         
-        // Check if the colliding object is the up spell (by tag or name)
+       
         if (other.CompareTag("UpSpell") || other.gameObject.name.Contains("UpSpell"))
         {
             Debug.Log("Destructible material hit by up spell!");
-            // Destroy this object
+            
             NetworkObject networkObject = GetComponent<NetworkObject>();
             if (networkObject != null)
             {

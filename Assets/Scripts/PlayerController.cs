@@ -320,7 +320,7 @@ public class PlayerController : NetworkBehaviour
             sr.flipX = true;
         }
 
-        // 2) Ground check
+        
         wasGrounded = isGrounded;
         isGrounded = Physics2D.OverlapCircle(
             groundCheck.position, groundCheckRadius, groundLayer);
@@ -328,11 +328,11 @@ public class PlayerController : NetworkBehaviour
         bool walking = Mathf.Abs(moveInput.Value) > 0.1f && isGrounded;
         bool jumping = !isGrounded;
 
-        // 8) Update Animator parameters
+        //for animation
         animator.SetBool("Walking", walking);
         animator.SetBool("Jumping", jumping);
 
-        // Only process input for the local player
+        // Only process input for the local player 
         if (!IsOwner)
         {
             return;
@@ -356,8 +356,8 @@ public class PlayerController : NetworkBehaviour
             rb.constraints = originalConstraints;
         }
 
-        // --- HANDLE HORIZONTAL MOVEMENT INPUT HERE ---
-        float horizontal = Input.GetAxisRaw("Horizontal"); // Handles A/D, Left/Right, and controller
+        
+        float horizontal = Input.GetAxisRaw("Horizontal");
         moveInput.Value = horizontal;
 
         // --- HANDLE CHEAT MODE INPUT ---
@@ -433,7 +433,7 @@ public class PlayerController : NetworkBehaviour
             timeSinceCast -= Time.deltaTime;
         }
 
-        // 3) Jump buffer
+        //  Jump buffer
         if (wantJump)
         {
             jumpBufferCounter = jumpBufferTime;
@@ -444,7 +444,7 @@ public class PlayerController : NetworkBehaviour
             jumpBufferCounter -= Time.deltaTime;
         }
 
-        // 4) Jump initiation
+        //  Jump initiation
         if (jumpBufferCounter > 0f)
         {
             if (isGrounded || coyoteTimeCounter > 0f)
@@ -463,7 +463,7 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-        // 5) Jump cut
+        //  Jump cut
         if (wantStopJump && rb.linearVelocity.y > 0f)
         {
             rb.linearVelocity = new Vector2(
@@ -530,26 +530,26 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        // Healing logic (Hollow Knight style: must hold for healTime, only heal once per hold)
+        // --Healing logic --
         bool healButtonHeld = Input.GetMouseButton(1);
 
-        // For spell healing, we don't require button input
+        
         bool canStartHealing = false;
         if (spellHeal)
         {
-            // Spell healing - can start immediately if conditions are met
+            //  can start immediately if conditions are met
             canStartHealing = !isHealing.Value && currentHealth.Value < maxHealth && IsIdle() && currentMana.Value > 0f;
         }
         else
         {
-            // Regular healing - requires button hold
+            //requires button hold
             canStartHealing = !isHealing.Value && currentHealth.Value < maxHealth && IsIdle() && healButtonHeld &&
                 !healButtonHeldLastFrame && currentMana.Value > 0f;
         }
 
         if (canStartHealing)
         {
-            // Start healing charge
+            // healing charge
             isHealing.Value = true;
             healTimer = healTime;
         }
@@ -1027,7 +1027,7 @@ public class PlayerController : NetworkBehaviour
             return;
         
         currentHealth.Value = Mathf.Min(currentHealth.Value + amount, maxHealth);
-        // Optionally trigger a heal animation or effect here
+        
     }
 
     public void TryCastSpell()
@@ -1077,14 +1077,14 @@ public class PlayerController : NetworkBehaviour
                 // Deduct mana cost
                 currentMana.Value = Mathf.Clamp(currentMana.Value - manaSpellCost, 0, maxMana);
                 
-                // Down spell (heal spell) - integrate with healing system
+                
                 if (downSpell != null)
                 {
                     downSpell.SetActive(false); // Reset if needed
                     downSpell.SetActive(true); // Activate effect
                 }
                 
-                // Start the healing process if player can heal
+                
                 if (currentHealth.Value < maxHealth && IsIdle())
                 {
                     StartSpellHeal();
@@ -1131,7 +1131,7 @@ public class PlayerController : NetworkBehaviour
             isCasting.Value = true;
             timeSinceCast = timeBetweenCast;
 
-            //todo: Add client prediction to fireball spawn
+           
             FireballSpawn_ServerRpc();
 
             // Reset casting state after animation

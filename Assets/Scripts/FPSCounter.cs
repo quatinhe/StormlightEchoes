@@ -28,13 +28,13 @@ public class FPSCounter : MonoBehaviour
     {
         showFPS = showOnStart;
         
-        // Initialize GUI style
+        
         style = new GUIStyle();
         style.alignment = TextAnchor.UpperLeft;
         style.fontSize = fontSize;
         style.normal.textColor = textColor;
         
-        // Add a black outline for better readability
+        
         style.fontStyle = FontStyle.Bold;
     }
 
@@ -48,10 +48,10 @@ public class FPSCounter : MonoBehaviour
         
         if (showFPS)
         {
-            // Calculate delta time
+            
             deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
             
-            // Update FPS at specified interval
+           
             timer += Time.unscaledDeltaTime;
             if (timer >= updateInterval)
             {
@@ -65,22 +65,22 @@ public class FPSCounter : MonoBehaviour
     {
         if (!showFPS) return;
         
-        // Calculate position
+        
         Rect rect = new Rect(screenOffset.x, screenOffset.y, 200, 50);
         
-        // Create FPS text with additional info
+       
         string fpsText = string.Format("FPS: {0:F1}\nMS: {1:F2}", fps, deltaTime * 1000.0f);
         
-        // Draw background for better readability
+        
         Color originalColor = GUI.color;
-        GUI.color = new Color(0, 0, 0, 0.5f); // Semi-transparent black
+        GUI.color = new Color(0, 0, 0, 0.5f); 
         GUI.DrawTexture(new Rect(rect.x - 5, rect.y - 5, rect.width, rect.height), Texture2D.whiteTexture);
         GUI.color = originalColor;
         
-        // Draw the FPS text
+        
         GUI.Label(rect, fpsText, style);
         
-        // Add performance indicators
+        // colors
         string performanceText = GetPerformanceIndicator(fps);
         if (!string.IsNullOrEmpty(performanceText))
         {
@@ -124,7 +124,7 @@ public class FPSCounter : MonoBehaviour
             return Color.red;
     }
 
-    // Public methods for external access
+   
     public void ShowFPS(bool show)
     {
         showFPS = show;

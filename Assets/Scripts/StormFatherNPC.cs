@@ -316,7 +316,7 @@ public class StormFatherNPC : MonoBehaviour
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
         
-        // Close the dialogue
+        
         CloseDialogue();
     }
 } 

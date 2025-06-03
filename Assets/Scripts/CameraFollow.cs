@@ -52,20 +52,20 @@ public class CameraFollow : MonoBehaviour
             return;
         }
         
-        // Store original camera settings
+        //  original camera settings
         wasOrthographic = cam.orthographic;
         originalOrthographicSize = cam.orthographicSize;
         originalRotation = transform.eulerAngles;
         freeCamRotation = originalRotation;
         
-        // Set initial orthographic size if not set
+        
         if (orthographicSize <= 0)
             orthographicSize = cam.orthographic ? cam.orthographicSize : 5f;
     }
 
     void Update()
     {
-        // Toggle free camera mode with U key
+        
         if (Input.GetKeyDown(KeyCode.U))
         {
             ToggleFreeCameraMode();
@@ -81,13 +81,13 @@ public class CameraFollow : MonoBehaviour
     {
         if (isFreeCameraMode)
         {
-            // Don't follow target in free camera mode
+            
             return;
         }
         
         if (target == null) return;
 
-        // Normal follow behavior
+        
         Vector3 targetPosition = target.position + offset;
         transform.position = Vector3.SmoothDamp(
             transform.position, 
@@ -103,18 +103,18 @@ public class CameraFollow : MonoBehaviour
         
         if (isFreeCameraMode)
         {
-            // Entering free camera mode
+           
             Debug.Log("[CameraFollow] Entering free camera mode");
             
-            // Store cursor state and lock it for camera rotation
+           
             cursorWasLocked = Cursor.lockState == CursorLockMode.Locked;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             
-            // Set camera rotation for free camera
+           
             freeCamRotation = transform.eulerAngles;
             
-            // Switch to perspective if enabled
+            
             if (enable3DPerspective && cam != null)
             {
                 cam.orthographic = false;
@@ -123,17 +123,17 @@ public class CameraFollow : MonoBehaviour
         }
         else
         {
-            // Exiting free camera mode
+           
             Debug.Log("[CameraFollow] Exiting free camera mode - returning to follow mode");
             
-            // Restore cursor state
+          
             if (!cursorWasLocked)
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
             }
             
-            // Restore original camera settings
+           
             if (cam != null)
             {
                 cam.orthographic = wasOrthographic;
@@ -143,10 +143,10 @@ public class CameraFollow : MonoBehaviour
                 }
             }
             
-            // Reset camera rotation
+           
             transform.eulerAngles = originalRotation;
             
-            // Reset velocity for smooth transition back to follow mode
+            
             velocity = Vector3.zero;
         }
     }
@@ -155,30 +155,30 @@ public class CameraFollow : MonoBehaviour
     {
         if (cam == null) return;
         
-        // Mouse look rotation
+      
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
         
         freeCamRotation.y += mouseX;
         freeCamRotation.x -= mouseY;
         
-        // Clamp vertical rotation to prevent camera flipping
+    
         freeCamRotation.x = Mathf.Clamp(freeCamRotation.x, -90f, 90f);
         
         transform.eulerAngles = freeCamRotation;
         
-        // Calculate movement speed (with potential speed boost)
+      
         float currentSpeed = freeCamMoveSpeed;
         float currentVerticalSpeed = freeCamVerticalSpeed;
         
-        // Speed boost with Shift
+      
         if (Input.GetKey(KeyCode.LeftShift))
         {
             currentSpeed *= 2f;
             currentVerticalSpeed *= 2f;
         }
         
-        // WASD movement
+      
         Vector3 moveDirection = Vector3.zero;
         
         if (Input.GetKey(KeyCode.W))
@@ -190,23 +190,23 @@ public class CameraFollow : MonoBehaviour
         if (Input.GetKey(KeyCode.D))
             moveDirection += transform.right;
         
-        // Q/E for vertical movement
+     
         if (Input.GetKey(KeyCode.Q))
             moveDirection -= transform.up;
         if (Input.GetKey(KeyCode.E))
             moveDirection += transform.up;
         
-        // Apply movement
+      
         if (moveDirection != Vector3.zero)
         {
             moveDirection.Normalize();
             
-            // Check if we're using vertical movement (Q/E keys)
+         
             bool usingVerticalMovement = Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.E);
             
             if (usingVerticalMovement)
             {
-                // Separate horizontal and vertical movement for different speeds
+               
                 Vector3 horizontalMovement = new Vector3(moveDirection.x, 0, moveDirection.z);
                 Vector3 verticalMovement = new Vector3(0, moveDirection.y, 0);
                 
@@ -215,25 +215,25 @@ public class CameraFollow : MonoBehaviour
             }
             else
             {
-                // Normal movement for WASD only
+                
                 transform.position += moveDirection * currentSpeed * Time.deltaTime;
             }
         }
         
-        // Escape key to exit free camera mode
+       
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             ToggleFreeCameraMode();
         }
     }
     
-    // Public method to check if in free camera mode
+    
     public bool IsFreeCameraMode()
     {
         return isFreeCameraMode;
     }
     
-    // Public method to manually set free camera mode
+    
     public void SetFreeCameraMode(bool enabled)
     {
         if (isFreeCameraMode != enabled)

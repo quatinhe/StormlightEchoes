@@ -24,7 +24,7 @@ public class DeathManager : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern
+        
         if (Instance == null)
         {
             Instance = this;

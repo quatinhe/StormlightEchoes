@@ -5,18 +5,18 @@ public class DisableAfterAnimation : MonoBehaviour
 {
     private Animator animator;
     private float animationLength;
-    private const float EXTRA_DISPLAY_TIME = 0.5f; // Extra time in seconds
+    private const float EXTRA_DISPLAY_TIME = 0.5f; 
 
     void OnEnable()
     {
         animator = GetComponent<Animator>();
         if (animator != null)
         {
-            // Reset the animator to play from the beginning
+           
             animator.Rebind();
             animator.Update(0f);
             
-            // Get the length of the current animation clip
+           
             AnimatorClipInfo[] clipInfo = animator.GetCurrentAnimatorClipInfo(0);
             if (clipInfo.Length > 0)
             {
